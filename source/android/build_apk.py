@@ -1,6 +1,6 @@
 # Builds the Android app (Khalids-Hunt.apk) with the Android SDK tools only: no Gradle, nothing downloaded.
 # Run make_game.py first; it writes assets/index.html (the game with three.js built in).
-import glob, os, shutil, subprocess, zipfile
+import glob, os, random, shutil, string, subprocess, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_APK = os.path.join(HERE, "..", "..", "releases", "Khalids-Hunt.apk")
@@ -12,7 +12,13 @@ ANDROID_JAR = os.path.join(sorted(glob.glob(os.path.join(SDK, "platforms", "andr
 JDK = os.environ.get("JAVA_HOME") or r"C:\Program Files\Android\Android Studio\jbr"
 JAVA, JAVAC, KEYTOOL = (os.path.join(JDK, "bin", n + ".exe") for n in ("java", "javac", "keytool"))
 KEYSTORE = os.path.join(HERE, "rafi-hunt.keystore")   # keep this file: updates must be signed with the same key
-PASS = os.environ.get("HUNT_KEYSTORE_PASS") or "rafihunt"   # the key itself (rafi-hunt.keystore) is never published
+PWFILE = os.path.join(HERE, "keystore-password.txt")   # private, like the keystore: both stay out of git
+PASS = os.environ.get("HUNT_KEYSTORE_PASS") or (
+    open(PWFILE, encoding="utf-8").read().strip() if os.path.isfile(PWFILE) else None)
+if PASS is None:          # first build on a new machine: make a key and remember its password
+    PASS = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(20))
+    open(PWFILE, "w", encoding="utf-8").write(PASS)
+    print("wrote a new keystore password to", PWFILE, "- back it up with the keystore")
 
 def run(*cmd):
     print(">", os.path.basename(cmd[0]), *cmd[1:4], "...")

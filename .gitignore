@@ -2,6 +2,7 @@
 *.keystore
 *.jks
 keystore-password.txt
+source/android/keystore-password.txt
 
 # Android build output (rebuild with source/android/build_apk.py)
 source/android/build/

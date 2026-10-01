@@ -73,8 +73,10 @@ That needs the Android SDK from Android Studio — no Gradle. It writes `release
 
 `source/android/rafi-hunt.keystore` signs the app. It is **not** in this repository (`.gitignore` keeps it
 out) and must stay private — anyone holding it can publish updates as this app. Back it up; without it you
-cannot update an installed app under the same key. The build script creates a new key if none is found, and
-takes its password from the `HUNT_KEYSTORE_PASS` environment variable.
+cannot update an installed app under the same key. Its password lives next to it in
+`source/android/keystore-password.txt`, which is ignored by git as well - back up both together. On a machine
+that has neither, the build script generates a fresh key and password and tells you where it put them; you
+can also pass the password in the `HUNT_KEYSTORE_PASS` environment variable.
 
 The Android package id is still `com.milu.rafihunt`, from the game's first version, so that existing
 installs keep updating normally.
