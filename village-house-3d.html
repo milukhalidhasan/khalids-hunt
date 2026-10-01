@@ -1,0 +1,1686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Village House 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Hind+Siliguri:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#EEF1F0; --sheet:#FAFBFA; --ink:#1B2422; --ink-2:#4E5C59; --rule:#CCD5D2;
+  --brick:#A5432A; --brick-ink:#FFFFFF; --pick:#E3A33A; --chip:#F3E4DE;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow","Segoe UI",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",Consolas,"Courier New",monospace;
+  --f-bn:"Hind Siliguri","Noto Sans Bengali","Vrinda",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101615; --sheet:#161D1C; --ink:#E3EAE8; --ink-2:#9DAEAA; --rule:#2C3836;
+    --brick:#D0674B; --brick-ink:#1A0F0B; --chip:#3A2520;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101615; --sheet:#161D1C; --ink:#E3EAE8; --ink-2:#9DAEAA; --rule:#2C3836;
+  --brick:#D0674B; --brick-ink:#1A0F0B; --chip:#3A2520;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--f-body)}
+body.bn{font-family:var(--f-bn)}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:auto minmax(0,1fr)}
+.top{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:10px 16px;background:var(--sheet);border-bottom:1.5px solid var(--ink)}
+.top h1{margin:0;font:600 1.45rem/1.1 var(--f-display);letter-spacing:.01em;text-wrap:balance}
+body.bn .top h1{font-family:var(--f-bn);font-size:1.3rem;line-height:1.3}
+.top p{margin:2px 0 0;font:500 .74rem/1.3 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--brick)}
+body.bn .top p{font-family:var(--f-bn);text-transform:none;letter-spacing:0;font-size:.84rem}
+.lang{display:inline-flex;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--ink);font:500 .85rem/1 var(--f-body);padding:7px 12px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.lang button:last-child{font-family:var(--f-bn)}
+#stage{position:relative;min-height:0;background:#DCE6E8;overflow:hidden;touch-action:none}
+#stage canvas{display:block;width:100%;height:100%;outline:none}
+.views{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 24px)}
+.vbtn{font:600 .82rem/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;padding:8px 11px;border-radius:4px;border:1.5px solid #1B2422;background:rgba(250,251,250,.92);color:#1B2422;cursor:pointer}
+body.bn .vbtn{font-family:var(--f-bn);text-transform:none;letter-spacing:0;font-size:.86rem;font-weight:500}
+.vbtn:hover{background:#FFFFFF}
+.vbtn.inside{background:#A5432A;border-color:#A5432A;color:#FFFFFF}
+.vbtn:focus-visible,.lang button:focus-visible,.part:focus-visible,.tog input:focus-visible{outline:2px solid var(--pick);outline-offset:2px}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.l3{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;font:600 12px/1.15 var(--f-display);letter-spacing:.05em;text-transform:uppercase;color:#1B2422;background:rgba(250,251,250,.9);border:1px solid rgba(27,36,34,.25);padding:3px 7px;border-radius:3px;text-align:center}
+.l3 small{display:block;font:400 10.5px/1.2 var(--f-mono);letter-spacing:0;text-transform:none;color:#4E5C59}
+.l3.dir{background:transparent;border:0;color:#2B3A36;font-size:13px;letter-spacing:.2em;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+body.bn .l3{font-family:var(--f-bn);text-transform:none;letter-spacing:0;font-size:12.5px}
+#tip{position:absolute;left:0;top:0;pointer-events:none;background:#1B2422;color:#FAFBFA;font:500 12.5px/1.35 var(--f-body);padding:6px 9px;border-radius:4px;max-width:260px;transform:translate(12px,12px)}
+body.bn #tip{font-family:var(--f-bn)}
+#tip small{display:block;color:#C9D3D0;font:400 11.5px/1.3 var(--f-mono)}
+.hint{position:absolute;left:12px;bottom:12px;right:12px;font:500 .76rem/1.35 var(--f-body);color:#2B3A36;pointer-events:none;text-shadow:0 1px 0 rgba(255,255,255,.75)}
+body.bn .hint{font-family:var(--f-bn)}
+#loading{position:absolute;inset:0;display:grid;place-items:center;font:500 .95rem var(--f-body);color:#2B3A36}
+aside{min-height:0;overflow:auto;background:var(--sheet);border-left:1.5px solid var(--ink);padding-block:14px 20px;padding-inline:16px;display:grid;gap:18px;align-content:start}
+.sec h2{margin:0 0 8px;font:600 .82rem/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+body.bn .sec h2{font-family:var(--f-bn);text-transform:none;letter-spacing:0;font-size:.9rem;font-weight:500}
+.togs{display:grid;gap:7px}
+.tog{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.95rem}
+.tog input{width:17px;height:17px;margin:0;accent-color:var(--brick)}
+.card{border:1.5px solid var(--ink);border-radius:4px;padding:12px 13px;background:var(--paper)}
+.card .cat{font:500 .7rem/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--brick)}
+body.bn .card .cat{font-family:var(--f-bn);text-transform:none;letter-spacing:0;font-size:.8rem}
+.card h3{margin:4px 0 2px;font:600 1.25rem/1.2 var(--f-display);letter-spacing:.01em}
+body.bn .card h3{font-family:var(--f-bn);font-size:1.12rem;line-height:1.35}
+.card .sz{font:500 .9rem/1.4 var(--f-mono);font-variant-numeric:tabular-nums}
+body.bn .card .sz{font-family:var(--f-bn)}
+.card p{margin:6px 0 0;color:var(--ink-2);font-size:.92rem;line-height:1.45}
+.card .empty{margin:0;color:var(--ink-2)}
+details{border-top:1px solid var(--rule)}
+details:last-of-type{border-bottom:1px solid var(--rule)}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:9px 2px;font:600 .98rem/1.2 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+body.bn summary{font-family:var(--f-bn);text-transform:none;letter-spacing:0;font-weight:500}
+summary::-webkit-details-marker{display:none}
+summary .n{font:500 .78rem var(--f-mono);color:var(--ink-2)}
+summary::after{content:"+";font:500 1rem var(--f-mono);color:var(--ink-2);margin-left:8px}
+details[open] summary::after{content:"–"}
+summary .grow{flex:1}
+.plist{display:grid;gap:2px;padding:0 0 10px}
+.part{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:400 .92rem/1.3 var(--f-body);padding:6px 8px;border-radius:3px;cursor:pointer}
+body.bn .part{font-family:var(--f-bn)}
+.part:hover{background:var(--chip)}
+.part[aria-current="true"]{background:var(--brick);color:var(--brick-ink)}
+.part .ps{font:400 .8rem/1.3 var(--f-mono);color:inherit;opacity:.75;white-space:nowrap}
+body.bn .part .ps{font-family:var(--f-bn)}
+.credit{border-top:1.5px solid var(--ink);padding-top:12px;display:grid;gap:2px}
+.credit .cl{font:500 .68rem/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+body.bn .credit .cl{font-family:var(--f-bn);letter-spacing:0;text-transform:none;font-size:.8rem}
+.credit .cn{font:600 1.08rem/1.25 var(--f-display);letter-spacing:.02em}
+body.bn .credit .cn{font-family:var(--f-bn);letter-spacing:0}
+.credit .ca{font-size:.84rem;line-height:1.4;color:var(--ink-2)}
+.rng{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.rng input{width:100%;margin:0;accent-color:var(--brick)}
+.rng output{font:500 .88rem/1 var(--f-mono);min-width:5.6em;text-align:right;font-variant-numeric:tabular-nums}
+body.bn .rng output{font-family:var(--f-bn)}
+.rng.sub{padding-left:26px}
+.rng-note{margin:6px 0 0;font-size:.84rem;color:var(--ink-2);line-height:1.4}
+@media (max-width:820px){
+  html,body{height:auto}
+  .app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 62vh auto}
+  aside{border-left:0;border-top:1.5px solid var(--ink)}
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <h1 id="t-title">Four-room one-storey house</h1>
+      <p id="t-sub">3D model · red brick · front faces west</p>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="lang-en" aria-pressed="true">English</button>
+      <button type="button" id="lang-bn" aria-pressed="false">বাংলা</button>
+    </div>
+  </header>
+
+  <section id="stage" aria-label="3D model of the house">
+    <div id="loading">Loading the 3D model…</div>
+    <div id="labels"></div>
+    <div class="views" role="group" aria-label="Camera views">
+      <button type="button" class="vbtn" data-view="iso" id="v-iso">3D</button>
+      <button type="button" class="vbtn" data-view="front" id="v-front">Front</button>
+      <button type="button" class="vbtn" data-view="back" id="v-back">Back</button>
+      <button type="button" class="vbtn" data-view="north" id="v-north">North</button>
+      <button type="button" class="vbtn" data-view="south" id="v-south">South</button>
+      <button type="button" class="vbtn" data-view="top" id="v-top">Top</button>
+      <button type="button" class="vbtn inside" data-view="inside" id="v-inside">See inside</button>
+    </div>
+    <div id="tip" hidden></div>
+    <div class="hint" id="t-hint">Drag to rotate · scroll or pinch to zoom · right-drag or two fingers to move · click any part</div>
+  </section>
+
+  <aside>
+    <div class="sec">
+      <h2 id="t-show">Show</h2>
+      <div class="togs">
+        <label class="tog"><input type="checkbox" id="tg-roof" checked> <span id="t-roof">Roof and parapet</span></label>
+        <label class="tog"><input type="checkbox" id="tg-cut"> <span id="t-cut">Cut the walls to look inside</span></label>
+        <div class="rng sub"><input type="range" id="cut-h" min="3" max="9" step="0.5" value="5" aria-label="Cut height"><output id="t-cuth" for="cut-h">5 ft</output></div>
+        <label class="tog"><input type="checkbox" id="tg-doors"> <span id="t-doors">Open all doors and the gate</span></label>
+        <label class="tog"><input type="checkbox" id="tg-furn" checked> <span id="t-furn">Furniture</span></label>
+        <label class="tog"><input type="checkbox" id="tg-labels" checked> <span id="t-labels">Room names</span></label>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-sun">Sunlight · time of day</h2>
+      <div class="rng"><input type="range" id="sun-t" min="6" max="18" step="0.25" value="15.5" aria-labelledby="t-sun"><output id="t-time" for="sun-t">3:30 PM</output></div>
+      <p class="rng-note" id="t-sunnote">Slide from morning (sun in the east, behind the house) to evening (sun on the front verandah).</p>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-sel">Selected part</h2>
+      <div class="card" id="card"><p class="empty" id="t-none">Click any part of the model, or pick one from the list below.</p></div>
+    </div>
+
+    <div class="sec">
+      <h2 id="t-parts">Every part</h2>
+      <div id="parts"></div>
+    </div>
+
+    <div class="credit">
+      <span class="cl" id="t-designed">Designed by</span>
+      <span class="cn" id="t-name">Md. Khalid Hasan Milu</span>
+      <span class="ca" id="t-aff">Department of Agroforestry and Environment, Gazipur Agricultural University, Gazipur-1706, Bangladesh</span>
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script>
+(function () {
+  "use strict";
+  var stage = document.getElementById("stage");
+  if (!window.THREE || !THREE.OrbitControls) {
+    document.getElementById("loading").textContent = "The 3D library could not load. Check the internet connection and reload the page.";
+    return;
+  }
+
+  /* ---------------- plan data, in inches (same numbers as the floor plan) ---------------- */
+  var IN = 1 / 12, W = 455, D = 426, VER = 48, WALL_H = 120, CUT_FT = 5;
+  var OX = W / 2, OZ = (D + VER) / 2;
+  function X(x) { return (x - OX) * IN; }
+  function Z(z) { return (z - OZ) * IN; }
+  function Y(y) { return y * IN; }
+  var BN_D = "০১২৩৪৫৬৭৮৯";
+  function bnNum(s) { return String(s).replace(/[0-9]/g, function (d) { return BN_D[+d]; }); }
+
+  var lang = "en";
+  function T(en, bn) { return lang === "bn" ? bn : en; }
+
+  // plan: top edge = east (back), bottom = west (front, verandah), left = north, right = south
+  var ROOMS = [
+    { k: "bed1", en: "Bedroom 1", bn: "শোবার ঘর ১", r: [[10, 10, 154, 178]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "North-east corner. 6' × 7' bed, almirah and dressing table. Outside door D4 in the north wall. Uses the common bath.",
+      nBn: "উত্তর-পূর্ব কোণ। ৬' × ৭' খাট, আলমারি ও ড্রেসিং টেবিল। উত্তরের দেয়ালে বাইরের দরজা D4। কমন বাথরুম ব্যবহার করবে।" },
+    { k: "bed2", en: "Bedroom 2", bn: "শোবার ঘর ২", r: [[301, 10, 445, 178]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "South-east corner, the coolest room: south breeze and morning sun. Uses the common bath.",
+      nBn: "দক্ষিণ-পূর্ব কোণ, সবচেয়ে ঠান্ডা ঘর: দক্ষিণের বাতাস আর সকালের রোদ। কমন বাথরুম ব্যবহার করবে।" },
+    { k: "bed3", en: "Bedroom 3", bn: "শোবার ঘর ৩", r: [[10, 248, 154, 416]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "North-west corner. 5' × 7' bed, almirah and study table. Own attached bath, and an outside door D4 in the north wall.",
+      nBn: "উত্তর-পশ্চিম কোণ। ৫' × ৭' খাট, আলমারি ও পড়ার টেবিল। নিজস্ব এটাচড বাথ, আর উত্তরের দেয়ালে বাইরের দরজা D4।" },
+    { k: "bed4", en: "Bedroom 4", bn: "শোবার ঘর ৪", r: [[301, 248, 445, 416]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "South-west corner. 5' × 7' bed, almirah and study table. Own attached bath.",
+      nBn: "দক্ষিণ-পশ্চিম কোণ। ৫' × ৭' খাট, আলমারি ও পড়ার টেবিল। নিজস্ব এটাচড বাথ।" },
+    { k: "kitchen", en: "Kitchen", bn: "রান্নাঘর", r: [[159, 10, 243, 130]], sz: "7' × 10'", area: "70", fl: "wet",
+      nEn: "L-shaped counter 2'-8\" high, 2-burner stove under the east window with an exhaust fan, sink, fridge and rack.",
+      nBn: "২'-৮\" উঁচু L-আকারের কাউন্টার, পূর্বের জানালার নিচে ২ চুলার স্টোভ ও এগজস্ট ফ্যান, সিংক, ফ্রিজ ও তাক।" },
+    { k: "bathC", en: "Common bath", bn: "কমন বাথরুম", r: [[248, 10, 296, 94]], sz: "4' × 7'", area: "28", fl: "wet",
+      nEn: "Shared by Bedrooms 1 and 2. Toilet set north–south, shower corner and floor drain.",
+      nBn: "শোবার ঘর ১ ও ২ ব্যবহার করবে। উত্তর-দক্ষিণ বরাবর টয়লেট, শাওয়ার ও ফ্লোর ড্রেন।" },
+    { k: "bathL", en: "Attached bath · Bedroom 3", bn: "এটাচড বাথ · শোবার ঘর ৩", r: [[10, 183, 94, 243]], sz: "7' × 5'", area: "35", fl: "wet",
+      nEn: "Door from Bedroom 3. Toilet set north–south, shower and floor drain.",
+      nBn: "শোবার ঘর ৩ থেকে দরজা। উত্তর-দক্ষিণ বরাবর টয়লেট, শাওয়ার ও ফ্লোর ড্রেন।" },
+    { k: "bathR", en: "Attached bath · Bedroom 4", bn: "এটাচড বাথ · শোবার ঘর ৪", r: [[361, 183, 445, 243]], sz: "7' × 5'", area: "35", fl: "wet",
+      nEn: "Door from Bedroom 4. Toilet set north–south, shower and floor drain.",
+      nBn: "শোবার ঘর ৪ থেকে দরজা। উত্তর-দক্ষিণ বরাবর টয়লেট, শাওয়ার ও ফ্লোর ড্রেন।" },
+    { k: "basin", en: "Basin corner", bn: "বেসিন কর্নার", r: [[248, 99, 296, 135]], sz: "4' × 3'", area: "12", fl: "common",
+      nEn: "Hand-wash basin facing the dining.", nBn: "ডাইনিংয়ের দিকে হাত ধোয়ার বেসিন।" },
+    { k: "dining", en: "Dining", bn: "ডাইনিং", r: [[159, 135, 296, 303], [99, 183, 159, 243], [296, 183, 356, 243]], sz: "11'-5\" × 14'", area: "≈ 210", fl: "common",
+      nEn: "6-seat table with a 4' × 4' skylight above. All bedroom doors open from here.",
+      nBn: "ওপরে ৪' × ৪' স্কাইলাইটসহ ৬ জনের টেবিল। সব শোবার ঘরের দরজা এখান থেকে।" },
+    { k: "drawing", en: "Drawing room", bn: "ড্রইং রুম", r: [[159, 308, 296, 416]], sz: "11'-5\" × 9'", area: "103", fl: "common",
+      nEn: "3-seat sofa, two armchairs and a centre table. Main door D1 opens here from the verandah.",
+      nBn: "৩ সিটের সোফা, ২টি সিঙ্গেল সোফা ও সেন্টার টেবিল। বারান্দা থেকে মূল দরজা D1 এখানে খোলে।" },
+    { k: "verandah", en: "Verandah", bn: "বারান্দা", r: [[0, 426, 455, 474]], sz: "37'-11\" × 4'", area: "152", fl: "verandah",
+      nEn: "Patterned cement-tile floor, three arches on plastered columns, a decorative grill and a grill gate at the steps. 2\" below the rooms.",
+      nBn: "নকশা করা সিমেন্ট টাইলের মেঝে, প্লাস্টার খুঁটির ওপর তিনটি খিলান, নকশার গ্রিল আর সিঁড়ির সামনে গ্রিল গেট। ঘরের চেয়ে ২\" নিচু।" }
+  ];
+  var ROOM = {}; ROOMS.forEach(function (r) { ROOM[r.k] = r; });
+
+  var DOOR_TYPES = {
+    D1: { sz: "3'-6\" × 7' · 2 leaves", en: "Two-leaf teak door with raised panels and brass knobs, in a moulded cream frame with a gold crest.", bn: "উঁচু প্যানেল ও পিতলের হাতলসহ দুই পাল্লার সেগুন কাঠের দরজা, নকশা করা ফ্রেম আর ওপরে সোনালি ক্রেস্ট।" },
+    D2: { sz: "3' × 7'", en: "Wood panel or flush door. Opens flat against the side wall.", bn: "কাঠের প্যানেল বা ফ্লাশ দরজা। খুললে পাশের দেয়ালের সাথে লেগে থাকে।" },
+    D3: { sz: "2'-6\" × 7'", en: "PVC, so water does not rot it.", bn: "পিভিসি, পানিতে নষ্ট হয় না।" },
+    D4: { sz: "3' × 7'", en: "Outside door. Solid wood or steel with a strong bolt.", bn: "বাইরের দরজা। শক্ত কাঠ বা স্টিল, মজবুত ছিটকিনি।" },
+    O1: { sz: "3'-6\" × 7'", en: "Open arch, off to one side of the main door. Add a curtain or a door later.", bn: "খোলা পথ, মূল দরজার এক পাশে সরানো। পর্দা দিন বা পরে দরজা লাগান।" }
+  };
+  var DOORS = [
+    { id: "D1", o: "h", w1: 416, w2: 426, s: 206.5, e: 248.5, hinge: "s", swing: -1, kind: "main", en: "Main door", bn: "মূল দরজা" },
+    { id: "D2", o: "v", w1: 154, w2: 159, s: 139, e: 175, hinge: "e", swing: -1, kind: "room", en: "Bedroom 1 door", bn: "শোবার ঘর ১-এর দরজা" },
+    { id: "D2", o: "v", w1: 296, w2: 301, s: 139, e: 175, hinge: "e", swing: 1, kind: "room", en: "Bedroom 2 door", bn: "শোবার ঘর ২-এর দরজা" },
+    { id: "D2", o: "h", w1: 243, w2: 248, s: 114, e: 150, hinge: "e", swing: 1, kind: "room", en: "Bedroom 3 door", bn: "শোবার ঘর ৩-এর দরজা" },
+    { id: "D2", o: "h", w1: 243, w2: 248, s: 305, e: 341, hinge: "s", swing: 1, kind: "room", en: "Bedroom 4 door", bn: "শোবার ঘর ৪-এর দরজা" },
+    { id: "D2", o: "h", w1: 130, w2: 135, s: 199, e: 235, hinge: "e", swing: -1, kind: "room", en: "Kitchen door", bn: "রান্নাঘরের দরজা" },
+    { id: "D3", o: "h", w1: 94, w2: 99, s: 250, e: 280, hinge: "s", swing: -1, kind: "bath", en: "Common bath door", bn: "কমন বাথরুমের দরজা" },
+    { id: "D3", o: "h", w1: 243, w2: 248, s: 62, e: 92, hinge: "e", swing: -1, kind: "bath", en: "Attached bath door · Bedroom 3", bn: "এটাচড বাথের দরজা · শোবার ঘর ৩" },
+    { id: "D3", o: "h", w1: 243, w2: 248, s: 363, e: 393, hinge: "s", swing: -1, kind: "bath", en: "Attached bath door · Bedroom 4", bn: "এটাচড বাথের দরজা · শোবার ঘর ৪" },
+    { id: "D4", o: "v", w1: 0, w2: 10, s: 14, e: 50, hinge: "s", swing: 1, kind: "out", en: "Bedroom 1 outside door (north)", bn: "শোবার ঘর ১-এর বাইরের দরজা (উত্তর)" },
+    { id: "D4", o: "v", w1: 0, w2: 10, s: 252, e: 288, hinge: "s", swing: 1, kind: "out", en: "Bedroom 3 outside door (north)", bn: "শোবার ঘর ৩-এর বাইরের দরজা (উত্তর)" },
+    { id: "O1", o: "h", w1: 303, w2: 308, s: 250, e: 292, arch: true, en: "Drawing–dining opening", bn: "ড্রইং–ডাইনিং খোলা পথ" }
+  ];
+  var WIN_TYPES = {
+    W1: { sill: 30, head: 84, sz: "4'-6\" × 4'-6\"", sill_t: "2'-6\"", en: "Thai aluminium sliding window with MS grill.", bn: "থাই অ্যালুমিনিয়াম স্লাইডিং জানালা, এমএস গ্রিলসহ।" },
+    W2: { sill: 30, head: 84, sz: "3' × 4'-6\"", sill_t: "2'-6\"", en: "Either side of the main door, under the verandah roof.", bn: "মূল দরজার দুই পাশে, বারান্দার ছাদের নিচে।" },
+    W3: { sill: 42, head: 84, sz: "3' × 3'-6\"", sill_t: "3'-6\"", en: "Above the kitchen counter, with a 12\" exhaust fan beside it.", bn: "রান্নাঘরের কাউন্টারের ওপরে, পাশে ১২\" এগজস্ট ফ্যান।" },
+    V: { sill: 66, head: 84, sz: "2' × 1'-6\"", sill_t: "5'-6\"", en: "High bathroom vent for air and privacy.", bn: "বাতাস আর আড়ালের জন্য বাথরুমের উঁচু ভেন্টিলেটর।" }
+  };
+  var SIDE = { east: ["east", "পূর্ব"], west: ["west", "পশ্চিম"], north: ["north", "উত্তর"], south: ["south", "দক্ষিণ"] };
+  var WINDOWS = [
+    { id: "W1", o: "h", w1: 0, w2: 10, s: 56, e: 110, room: "bed1", side: "east" },
+    { id: "W1", o: "v", w1: 0, w2: 10, s: 60, e: 114, room: "bed1", side: "north" },
+    { id: "W1", o: "h", w1: 0, w2: 10, s: 371, e: 425, room: "bed2", side: "east" },
+    { id: "W1", o: "v", w1: 445, w2: 455, s: 60, e: 114, room: "bed2", side: "south" },
+    { id: "W1", o: "v", w1: 0, w2: 10, s: 316, e: 370, room: "bed3", side: "north" },
+    { id: "W1", o: "h", w1: 416, w2: 426, s: 30, e: 84, room: "bed3", side: "west" },
+    { id: "W1", o: "v", w1: 445, w2: 455, s: 300, e: 354, room: "bed4", side: "south" },
+    { id: "W1", o: "h", w1: 416, w2: 426, s: 371, e: 425, room: "bed4", side: "west" },
+    { id: "W2", o: "h", w1: 416, w2: 426, s: 166, e: 202, room: "drawing", side: "west" },
+    { id: "W2", o: "h", w1: 416, w2: 426, s: 253, e: 289, room: "drawing", side: "west" },
+    { id: "W3", o: "h", w1: 0, w2: 10, s: 183, e: 219, room: "kitchen", side: "east" },
+    { id: "V", o: "h", w1: 0, w2: 10, s: 260, e: 284, room: "bathC", side: "east" },
+    { id: "V", o: "v", w1: 0, w2: 10, s: 201, e: 225, room: "bathL", side: "north" },
+    { id: "V", o: "v", w1: 445, w2: 455, s: 201, e: 225, room: "bathR", side: "south" }
+  ];
+  // wall rectangles [x1, z1, x2, z2, outward face or null]
+  var WALLS = [
+    [0, 0, 455, 10, "-z"], [0, 416, 455, 426, "+z"], [0, 10, 10, 416, "-x"], [445, 10, 455, 416, "+x"],
+    [154, 10, 159, 183], [10, 178, 154, 183], [243, 10, 248, 135], [159, 130, 243, 135],
+    [248, 94, 296, 99], [296, 10, 301, 183], [301, 178, 445, 183],
+    [94, 183, 99, 243], [356, 183, 361, 243],
+    [10, 243, 154, 248], [154, 243, 159, 416], [301, 243, 445, 248], [296, 243, 301, 416],
+    [159, 303, 296, 308]
+  ];
+
+  /* ---------------- renderer, scene, camera ---------------- */
+  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.domElement.setAttribute("aria-label", "3D house model. Drag to rotate.");
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+  document.getElementById("loading").remove();
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xdce6e8);
+  scene.fog = new THREE.Fog(0xdce6e8, 140, 360);
+  var camera = new THREE.PerspectiveCamera(42, 1, 0.3, 900);
+  camera.position.set(-36, 17, 58);
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 4, 0);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.09;
+  controls.maxPolarAngle = Math.PI * 0.495;
+  controls.minDistance = 6;
+  controls.maxDistance = 190;
+
+  var hemi = new THREE.HemisphereLight(0xe6eef0, 0x7d7560, 0.62);
+  scene.add(hemi);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+  var sun = new THREE.DirectionalLight(0xfff0dc, 0.95);
+  sun.position.set(38, 60, 34);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  var sc = sun.shadow.camera; sc.left = -42; sc.right = 42; sc.top = 42; sc.bottom = -42; sc.near = 10; sc.far = 160;
+  sun.shadow.bias = -0.0006;
+  scene.add(sun);
+
+  var cutPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), CUT_FT);
+
+  /* ---------------- textures and materials ---------------- */
+  function rng(seed) { var s = seed; return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+  function canvas(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+  function toTex(c) {
+    var t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  function brickTexture() {
+    // 20" wide × 24" high tile: two 10" bricks per course, eight 3" courses, running bond
+    var c = canvas(512, 512), g = c.getContext("2d"), r = rng(11), rows = 8, rh = 64, bw = 256, m = 7, i, k;
+    g.fillStyle = "#b7aa9b"; g.fillRect(0, 0, 512, 512);
+    var cols = [];
+    for (i = 0; i < rows; i++) cols.push([0, 1].map(function () {
+      return "hsl(" + (7 + r() * 9).toFixed(1) + "," + (46 + r() * 14).toFixed(1) + "%," + (31 + r() * 12).toFixed(1) + "%)";
+    }));
+    for (i = 0; i < rows; i++) {
+      var off = (i % 2) ? bw / 2 : 0;
+      for (k = -1; k <= 2; k++) {
+        g.fillStyle = cols[i][((k % 2) + 2) % 2];
+        g.fillRect(k * bw + off + m / 2, i * rh + m / 2, bw - m, rh - m);
+      }
+    }
+    for (i = 0; i < 7000; i++) { g.fillStyle = r() < 0.5 ? "rgba(0,0,0,.07)" : "rgba(255,255,255,.05)"; g.fillRect(r() * 512, r() * 512, 2, 2); }
+    return toTex(c);
+  }
+  function tileTexture(base, grout, n) {
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(5), s = 256 / n, i, j;
+    g.fillStyle = grout; g.fillRect(0, 0, 256, 256);
+    var b = parseInt(base.slice(1), 16), R = (b >> 16) & 255, G = (b >> 8) & 255, Bl = b & 255;
+    for (i = 0; i < n; i++) for (j = 0; j < n; j++) {
+      var f = 1 + (r() - 0.5) * 0.06;
+      g.fillStyle = "rgb(" + Math.round(R * f) + "," + Math.round(G * f) + "," + Math.round(Bl * f) + ")";
+      g.fillRect(i * s + 1.5, j * s + 1.5, s - 3, s - 3);
+    }
+    return toTex(c);
+  }
+  function encausticTexture() {
+    // 8" cement tiles, 2 × 2 per texture: cream ground, terracotta circles at the corners, teal star in the centre
+    var c = canvas(512, 512), g = c.getContext("2d"), s = 256, i, j;
+    g.fillStyle = "#e9d7b4"; g.fillRect(0, 0, 512, 512);
+    g.fillStyle = "#b0512e";
+    for (i = 0; i <= 2; i++) for (j = 0; j <= 2; j++) { g.beginPath(); g.arc(i * s, j * s, s * 0.22, 0, Math.PI * 2); g.fill(); }
+    for (i = 0; i < 2; i++) for (j = 0; j < 2; j++) {
+      g.save(); g.translate(i * s + s / 2, j * s + s / 2);
+      g.fillStyle = "#2f6b66"; g.fillRect(-s * 0.2, -s * 0.2, s * 0.4, s * 0.4); g.rotate(Math.PI / 4); g.fillRect(-s * 0.2, -s * 0.2, s * 0.4, s * 0.4);
+      g.fillStyle = "#e9d7b4"; g.beginPath(); g.arc(0, 0, s * 0.11, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#b0512e"; g.beginPath(); g.arc(0, 0, s * 0.055, 0, Math.PI * 2); g.fill();
+      g.restore();
+      g.strokeStyle = "rgba(70,45,30,.35)"; g.lineWidth = 3; g.strokeRect(i * s + 1.5, j * s + 1.5, s - 3, s - 3);
+    }
+    return toTex(c);
+  }
+  function grassTexture() {
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(21), i, cols = ["#6f8c43", "#8aa656", "#98b25f", "#6a8540", "#7d9a4a", "#a3b86a"];
+    g.fillStyle = "#7f9a4e"; g.fillRect(0, 0, 256, 256);
+    for (i = 0; i < 2600; i++) { g.fillStyle = cols[(r() * cols.length) | 0]; g.fillRect(r() * 256, r() * 256, 2 + r() * 3, 1 + r() * 2); }
+    return toTex(c);
+  }
+  function earthTexture() {
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(33), i, cols = ["#b8986c", "#cdb08a", "#a88b62", "#d2b995"];
+    g.fillStyle = "#c2a57c"; g.fillRect(0, 0, 256, 256);
+    for (i = 0; i < 2200; i++) { g.fillStyle = cols[(r() * cols.length) | 0]; g.fillRect(r() * 256, r() * 256, 2 + r() * 4, 2 + r() * 3); }
+    return toTex(c);
+  }
+  function basketBrickTexture() {
+    // bricks laid in pairs, alternating direction (basket weave): texture covers 32" × 32"
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(9), i, j, k;
+    g.fillStyle = "#8f7d6b"; g.fillRect(0, 0, 256, 256);
+    for (i = 0; i < 4; i++) for (j = 0; j < 4; j++) for (k = 0; k < 2; k++) {
+      g.fillStyle = "hsl(" + (8 + r() * 8).toFixed(1) + "," + (45 + r() * 12).toFixed(1) + "%," + (34 + r() * 10).toFixed(1) + "%)";
+      if ((i + j) % 2 === 0) g.fillRect(i * 64 + 2, j * 64 + k * 32 + 2, 60, 28); else g.fillRect(i * 64 + k * 32 + 2, j * 64 + 2, 28, 60);
+    }
+    return toTex(c);
+  }
+  function paintingTexture(seed, pal) {
+    // a small Bengal landscape: sky, sun, tree line, river with a boat, paddy fields, palms
+    var c = canvas(384, 256), g = c.getContext("2d"), r = rng(seed), i;
+    var sky = g.createLinearGradient(0, 0, 0, 150); sky.addColorStop(0, pal[0]); sky.addColorStop(1, pal[1]);
+    g.fillStyle = sky; g.fillRect(0, 0, 384, 256);
+    g.fillStyle = pal[2]; g.beginPath(); g.arc(80 + r() * 220, 62 + r() * 30, 22, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#3d6b3a"; g.fillRect(0, 142, 384, 28);
+    for (i = 0; i < 26; i++) { g.beginPath(); g.arc(i * 16, 144, 9 + r() * 8, Math.PI, 0); g.fill(); }
+    g.fillStyle = pal[3]; g.fillRect(0, 168, 384, 40);
+    g.fillStyle = "#7fae4a"; g.fillRect(0, 205, 384, 51);
+    g.strokeStyle = "rgba(60,90,40,.5)"; g.lineWidth = 2;
+    for (i = 0; i < 8; i++) { g.beginPath(); g.moveTo(0, 212 + i * 6); g.lineTo(384, 208 + i * 7); g.stroke(); }
+    var bx = 120 + r() * 140;
+    g.fillStyle = "#4a2e1e"; g.beginPath(); g.moveTo(bx - 40, 184); g.quadraticCurveTo(bx, 199, bx + 40, 184); g.lineTo(bx + 30, 191); g.lineTo(bx - 30, 191); g.fill();
+    g.fillStyle = "#efe6d0"; g.beginPath(); g.moveTo(bx, 184); g.lineTo(bx, 148); g.lineTo(bx + 24, 180); g.fill();
+    g.strokeStyle = "#2b3a22"; g.lineWidth = 3;
+    [30 + r() * 30, 320 + r() * 40].forEach(function (px) {
+      g.beginPath(); g.moveTo(px, 206); g.quadraticCurveTo(px + 6, 170, px + 2, 120); g.stroke();
+      for (var a = 0; a < 6; a++) { var an = -Math.PI / 2 + (a - 2.5) * 0.5; g.beginPath(); g.moveTo(px + 2, 120); g.quadraticCurveTo(px + 2 + Math.cos(an) * 18, 112 + Math.sin(an) * 10, px + 2 + Math.cos(an) * 30, 128 + Math.sin(an) * 14); g.stroke(); }
+    });
+    return toTex(c);
+  }
+  function rugTexture() {
+    var c = canvas(512, 384), g = c.getContext("2d"), i;
+    g.fillStyle = "#1f2f5a"; g.fillRect(0, 0, 512, 384);
+    g.fillStyle = "#8a2331"; g.fillRect(28, 28, 456, 328);
+    g.fillStyle = "#1f2f5a"; [[28, 28], [484, 28], [28, 356], [484, 356]].forEach(function (q) { g.beginPath(); g.arc(q[0], q[1], 46, 0, 6.3); g.fill(); });
+    g.fillStyle = "#d8b25a"; [[28, 28], [484, 28], [28, 356], [484, 356]].forEach(function (q) { g.beginPath(); g.arc(q[0], q[1], 12, 0, 6.3); g.fill(); });
+    g.strokeStyle = "#d8b25a"; g.lineWidth = 4; g.strokeRect(20, 20, 472, 344); g.strokeRect(36, 36, 440, 312);
+    for (i = 0; i < 22; i++) { g.beginPath(); g.arc(28 + i * 21.7, 10, 4, 0, 6.3); g.fill(); g.beginPath(); g.arc(28 + i * 21.7, 374, 4, 0, 6.3); g.fill(); }
+    g.save(); g.translate(256, 192);
+    g.fillStyle = "#1f2f5a"; g.beginPath();
+    for (i = 0; i < 16; i++) { var a = i * Math.PI / 8, rr = i % 2 ? 58 : 90; g.lineTo(Math.cos(a) * rr * 1.3, Math.sin(a) * rr); }
+    g.closePath(); g.fill();
+    g.fillStyle = "#d8b25a"; g.beginPath(); g.arc(0, 0, 34, 0, 6.3); g.fill();
+    g.fillStyle = "#8a2331"; g.beginPath(); g.arc(0, 0, 20, 0, 6.3); g.fill();
+    g.restore();
+    return toTex(c);
+  }
+  function kanthaTexture(base, thread) {
+    var c = canvas(256, 128), g = c.getContext("2d"), i, j;
+    g.fillStyle = base; g.fillRect(0, 0, 256, 128);
+    g.strokeStyle = thread; g.lineWidth = 2; g.setLineDash([5, 4]);
+    for (i = 8; i < 128; i += 9) { g.beginPath(); g.moveTo(6, i); g.lineTo(250, i); g.stroke(); }
+    g.setLineDash([]); g.fillStyle = thread;
+    for (i = 0; i < 5; i++) { var cx = 28 + i * 50; g.beginPath(); for (j = 0; j < 12; j++) { var a = j * Math.PI / 6, rr = j % 2 ? 7 : 15; g.lineTo(cx + Math.cos(a) * rr, 64 + Math.sin(a) * rr); } g.closePath(); g.fill(); }
+    g.lineWidth = 5; g.strokeStyle = thread; g.strokeRect(3, 3, 250, 122);
+    return toTex(c);
+  }
+  function clockTexture() {
+    var c = canvas(128, 128), g = c.getContext("2d"), i;
+    g.fillStyle = "#6b4a2e"; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = "#fbf7ee"; g.beginPath(); g.arc(64, 64, 58, 0, 6.3); g.fill();
+    g.fillStyle = "#2a2a2a"; for (i = 0; i < 12; i++) { var a = i * Math.PI / 6; g.fillRect(64 + Math.cos(a) * 48 - 2.5, 64 + Math.sin(a) * 48 - 2.5, 5, 5); }
+    g.strokeStyle = "#2a2a2a"; g.lineCap = "round";
+    g.lineWidth = 5; g.beginPath(); g.moveTo(64, 64); g.lineTo(88, 50); g.stroke();
+    g.lineWidth = 3; g.beginPath(); g.moveTo(64, 64); g.lineTo(58, 24); g.stroke();
+    return toTex(c);
+  }
+  function std(o) { return new THREE.MeshStandardMaterial(o); }
+  var M = {
+    brick: std({ map: brickTexture(), roughness: 0.95, side: THREE.DoubleSide }),
+    plaster: std({ color: 0xefe8db, roughness: 0.95, side: THREE.DoubleSide }),
+    ceiling: std({ color: 0xf5f2eb, roughness: 1 }),
+    concrete: std({ color: 0xa9a49a, roughness: 0.92, side: THREE.DoubleSide }),
+    plinth: std({ color: 0x8e8981, roughness: 0.95 }),
+    fl_room: std({ map: tileTexture("#e3d4bb", "#c9baa0", 2), roughness: 0.6 }),
+    fl_common: std({ map: tileTexture("#e2ded3", "#c6c0b3", 2), roughness: 0.6 }),
+    fl_wet: std({ map: tileTexture("#cfe0e4", "#a9bfc4", 3), roughness: 0.45 }),
+    fl_verandah: std({ map: encausticTexture(), roughness: 0.55 }),
+    wood: std({ color: 0x8a5a36, roughness: 0.7 }),
+    woodDark: std({ color: 0x5a3721, roughness: 0.65 }),
+    pvc: std({ color: 0xe6ecee, roughness: 0.5 }),
+    steelDoor: std({ color: 0x4d615e, roughness: 0.5, metalness: 0.3 }),
+    almirah: std({ color: 0x7b8e98, roughness: 0.45, metalness: 0.35 }),
+    frame: std({ color: 0x9ba4a8, roughness: 0.4, metalness: 0.5 }),
+    grill: std({ color: 0x2a2f2e, roughness: 0.6, metalness: 0.4 }),
+    glass: std({ color: 0x9cc7d6, transparent: true, opacity: 0.32, roughness: 0.05, metalness: 0.1, depthWrite: false, side: THREE.DoubleSide }),
+    mattress: std({ color: 0xf0ebe0, roughness: 0.9 }),
+    pillow: std({ color: 0xffffff, roughness: 0.9 }),
+    kantha: [0x2e7d7a, 0x8c2f39, 0xc9962b, 0x4f7a3a].map(function (c) { return std({ color: c, roughness: 0.9 }); }),
+    sofa: std({ color: 0x3e6b5e, roughness: 0.9 }),
+    granite: std({ color: 0x3f4242, roughness: 0.35 }),
+    cabinet: std({ color: 0xd8cebd, roughness: 0.8 }),
+    black: std({ color: 0x1c1e1e, roughness: 0.5 }),
+    ceramic: std({ color: 0xf6f6f3, roughness: 0.25 }),
+    steel: std({ color: 0xc4cacb, roughness: 0.3, metalness: 0.7 }),
+    fridge: std({ color: 0xe8ebeb, roughness: 0.35 }),
+    mirror: std({ color: 0xcfe2e9, roughness: 0.05, metalness: 0.8 }),
+    ground: std({ map: grassTexture(), roughness: 1 }),
+    yard: std({ map: earthTexture(), roughness: 1 }),
+    trunk: std({ color: 0x6a4a30, roughness: 0.9 }),
+    leaf: std({ color: 0x3d6a2d, roughness: 0.9, flatShading: true }),
+    cream: std({ color: 0xefe2c4, roughness: 0.85, side: THREE.DoubleSide }),
+    creamDark: std({ color: 0xdac59a, roughness: 0.85 }),
+    gold: std({ color: 0xc9a23a, roughness: 0.35, metalness: 0.8 }),
+    iron: std({ color: 0x1f3d35, roughness: 0.5, metalness: 0.45 }),
+    teak: std({ color: 0x6b3f1f, roughness: 0.55 }),
+    teakPanel: std({ color: 0x8a5528, roughness: 0.5 }),
+    cane: std({ color: 0xc49a5c, roughness: 0.8 }),
+    terracotta: std({ color: 0xa9542f, roughness: 0.9 }),
+    leafBright: std({ color: 0x4f8a36, roughness: 0.9, flatShading: true }),
+    marigold: std({ color: 0xe8a21c, roughness: 0.8 }),
+    rose: std({ color: 0xc8324a, roughness: 0.8 }),
+    lamp: std({ color: 0xfff1c8, emissive: 0xffc96b, emissiveIntensity: 1 })
+  };
+  Object.keys(M).forEach(function (k) { [].concat(M[k]).forEach(function (m) { if (!m.map) m.color.convertSRGBToLinear(); }); });
+  var BRICK_UV = [20 * IN, 24 * IN], TILE_UV = [2, 2];
+  // the 5 ft cut applies to the building only, not the ground or trees
+  var clipArr = [];
+  renderer.localClippingEnabled = true;
+  Object.keys(M).forEach(function (k) {
+    if (k === "ground" || k === "yard" || k === "trunk" || k === "leaf") return;
+    [].concat(M[k]).forEach(function (m) { m.clippingPlanes = clipArr; m.clipShadows = true; });
+  });
+  M.ground.map.repeat.set(90, 90); M.yard.map.repeat.set(14, 14);
+
+  /* ---------------- interior and garden materials ---------------- */
+  function mk(hex, o, clip) {
+    var m = std(Object.assign({ color: hex, roughness: 0.9 }, o || {}));
+    if (!m.map) m.color.convertSRGBToLinear();
+    if (clip) { m.clippingPlanes = clipArr; m.clipShadows = true; }
+    return m;
+  }
+  var MI = {
+    skirting: mk(0x6b4a2e, { roughness: 0.6 }, true),
+    bathTile: mk(0xffffff, { map: tileTexture("#d6ebee", "#b3cdd2", 4), roughness: 0.35 }, true),
+    kitchenTile: mk(0xffffff, { map: tileTexture("#f5f4ef", "#d3d1c7", 4), roughness: 0.35 }, true),
+    fanBody: mk(0xece8df, { roughness: 0.5 }, true),
+    fanBlade: mk(0x8a5a36, { roughness: 0.6 }, true),
+    rod: mk(0xc9a23a, { roughness: 0.35, metalness: 0.8 }, true),
+    frame: mk(0x7a5a2e, { roughness: 0.5 }, true),
+    plate: mk(0xf7f5ef, { roughness: 0.3 }, true),
+    fruits: [0xef8a1f, 0xe9c93a, 0xc33a2c, 0x7fb03a].map(function (c) { return mk(c, { roughness: 0.5 }, true); }),
+    bucket: mk(0x2f6fb0, { roughness: 0.5 }, true), mug: mk(0xc8412f, { roughness: 0.5 }, true),
+    towel: mk(0xe9b949, { roughness: 1 }, true), towel2: mk(0x5f9f8f, { roughness: 1 }, true),
+    cooker: mk(0xcfd4d6, { roughness: 0.3, metalness: 0.8 }, true),
+    jars: [0xd9a441, 0xb24a2f, 0x6f8f3e].map(function (c) { return mk(c, { roughness: 0.4 }, true); }),
+    potIn: mk(0xb35f35, {}, true), plant: mk(0x3f7f3a, { flatShading: true }, true)
+  };
+  var CURTAIN = { bed1: 0x2f7f7a, bed2: 0xd9745b, bed3: 0x2f4f86, bed4: 0x7d4a7f, drawing: 0x8a2331 };
+  var ME = {
+    palmTrunk: mk(0x7b6348, { roughness: 1 }), frond: mk(0x3f7a2e, { side: THREE.DoubleSide }),
+    coconut: mk(0x6b5a2a), mangoLeaf: mk(0x2f5e26, { flatShading: true }), jackLeaf: mk(0x355f2a, { flatShading: true }),
+    jackfruit: mk(0x9aa33e), bananaStem: mk(0x8faa55), bananaLeaf: mk(0x6da53a, { side: THREE.DoubleSide, roughness: 0.8 }),
+    bamboo: mk(0x9bb04a, { roughness: 0.6 }), bambooLeaf: mk(0x6f9a38, { flatShading: true }), betelTrunk: mk(0x8a8270),
+    water: mk(0x4f86a0, { roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.92 }), bank: mk(0x8c7a5a),
+    lilyPad: mk(0x4d8a3a, { side: THREE.DoubleSide }), lotus: mk(0xef9ab5), pollen: mk(0xf2d04a),
+    straw: mk(0xd2b25f, { roughness: 1, flatShading: true }), pump: mk(0x2f6b4f, { roughness: 0.5, metalness: 0.4 }),
+    slab: mk(0xa9a49a), soil: mk(0x5b4331), bush: mk(0x3e7a33, { flatShading: true }),
+    hib: mk(0xd8283c), mari: mk(0xf0a020), pink: mk(0xe86aa0), white: mk(0xf4f2ea),
+    cloud: mk(0xffffff, { roughness: 1, emissive: 0xffffff, emissiveIntensity: 0.3 }),
+    path: mk(0xffffff, { map: basketBrickTexture(), roughness: 0.95 }), blade: mk(0xffffff, { roughness: 0.9 })
+  };
+
+  /* ---------------- geometry helpers ---------------- */
+  function geoBox(x1, y1, z1, x2, y2, z2, uvs) {
+    var w = Math.max(Math.abs(x2 - x1) * IN, 0.002), h = Math.max(Math.abs(y2 - y1) * IN, 0.002), d = Math.max(Math.abs(z2 - z1) * IN, 0.002);
+    var g = new THREE.BoxGeometry(w, h, d);
+    g.translate(X((x1 + x2) / 2), Y((y1 + y2) / 2), Z((z1 + z2) / 2));
+    if (uvs) {
+      var p = g.attributes.position, nr = g.attributes.normal, uv = g.attributes.uv;
+      for (var i = 0; i < p.count; i++) {
+        var ax = Math.abs(nr.getX(i)), ay = Math.abs(nr.getY(i)), u, v;
+        if (ax > 0.5) { u = p.getZ(i); v = p.getY(i); } else if (ay > 0.5) { u = p.getX(i); v = p.getZ(i); } else { u = p.getX(i); v = p.getY(i); }
+        uv.setXY(i, u / uvs[0], v / uvs[1]);
+      }
+      uv.needsUpdate = true;
+    }
+    return g;
+  }
+  function addMesh(geo, material, parent, cast) {
+    var m = new THREE.Mesh(geo, material);
+    m.castShadow = cast !== false; m.receiveShadow = true;
+    parent.add(m); return m;
+  }
+  // B(parent, plan x1, plan z1, plan x2, plan z2, height y1, y2, material[, uv])
+  function B(parent, x1, z1, x2, z2, y1, y2, material, uvs) { return addMesh(geoBox(x1, y1, z1, x2, y2, z2, uvs), material, parent); }
+  function cyl(parent, cx, cz, r, y1, y2, material, sx) {
+    var g = new THREE.CylinderGeometry(r * IN, r * IN, (y2 - y1) * IN, 24);
+    var m = addMesh(g, material, parent);
+    m.position.set(X(cx), Y((y1 + y2) / 2), Z(cz));
+    if (sx) m.scale.x = sx;
+    return m;
+  }
+
+  /* ---------------- helpers for merged ornament (grills, balusters, carved doors) ---------------- */
+  var BGU = THREE.BufferGeometryUtils;
+  var WMAP = { x: X, y: Y, z: Z };
+  var LMAP = { x: function (u) { return u * IN; }, y: function (v) { return v * IN; }, z: function (w) { return w * IN; } };
+  function gbox(mp, x1, y1, z1, x2, y2, z2) {
+    var g = new THREE.BoxGeometry(Math.max(Math.abs(x2 - x1), 0.02) * IN, Math.max(Math.abs(y2 - y1), 0.02) * IN, Math.max(Math.abs(z2 - z1), 0.02) * IN);
+    g.translate(mp.x((x1 + x2) / 2), mp.y((y1 + y2) / 2), mp.z((z1 + z2) / 2));
+    return g;
+  }
+  function gring(mp, cx, cy, cz, r, tube, arc, rotZ) {
+    var g = new THREE.TorusGeometry(r * IN, tube * IN, 6, 32, arc || Math.PI * 2);
+    if (rotZ) g.rotateZ(rotZ);
+    g.translate(mp.x(cx), mp.y(cy), mp.z(cz));
+    return g;
+  }
+  function grod(mp, x1, y1, x2, y2, cz, t) {
+    var dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx * dx + dy * dy);
+    var g = new THREE.BoxGeometry(len * IN, t * IN, t * IN);
+    g.rotateZ(Math.atan2(dy, dx));
+    g.translate(mp.x((x1 + x2) / 2), mp.y((y1 + y2) / 2), mp.z(cz));
+    return g;
+  }
+  function Collector() { this.list = {}; }
+  Collector.prototype.add = function (k, g) { (this.list[k] = this.list[k] || []).push(g); };
+  Collector.prototype.flush = function (parent, mats) {
+    for (var k in this.list) {
+      var arr = this.list[k];
+      if (BGU && BGU.mergeBufferGeometries) addMesh(BGU.mergeBufferGeometries(arr, false), mats[k], parent);
+      else arr.forEach(function (g) { addMesh(g, mats[k], parent); });
+    }
+    this.list = {};
+  };
+  function swingTo(pivot, closedA, openA, amount) {
+    var delta = openA - closedA;
+    while (delta > Math.PI) delta -= 2 * Math.PI;
+    while (delta <= -Math.PI) delta += 2 * Math.PI;
+    pivot.rotation.y = closedA;
+    pivot.userData.closedA = closedA; pivot.userData.openA = closedA + delta * amount;
+    doorPivots.push(pivot);
+  }
+  // D1: two teak leaves with raised panels and brass knobs, in a moulded cream frame
+  function mainDoor(g, d) {
+    var L = (d.e - d.s) / 2;
+    [[d.s, 1], [d.e, -1]].forEach(function (h) {
+      var pivot = new THREE.Group(), holder = new THREE.Group(), c = new Collector();
+      pivot.position.set(X(h[0]), 0, Z(d.w1 + 0.9));
+      c.add("teak", gbox(LMAP, 0, 0.2, -0.9, L - 0.1, 83, 0.9));
+      [[6, 24], [29, 54], [59, 77]].forEach(function (q) {
+        c.add("panel", gbox(LMAP, 3, q[0], -1.25, L - 3, q[1], 1.25));
+        c.add("teak", gbox(LMAP, 5, q[0] + 2, -1.5, L - 5, q[1] - 2, 1.5));
+      });
+      [1.9, -1.9].forEach(function (zz) { var k = new THREE.SphereGeometry(0.95 * IN, 12, 8); k.translate((L - 2.4) * IN, 40 * IN, zz * IN); c.add("gold", k); });
+      c.flush(holder, { teak: M.teak, panel: M.teakPanel, gold: M.gold });
+      pivot.add(holder); g.add(pivot);
+      swingTo(pivot, h[1] > 0 ? 0 : Math.PI, Math.PI / 2, 0.92);
+    });
+    B(g, d.s - 3.5, 426, d.s, 427.6, 0, 89, M.cream); B(g, d.e, 426, d.e + 3.5, 427.6, 0, 89, M.cream);
+    B(g, d.s - 3.5, 426, d.e + 3.5, 427.6, 84, 89, M.cream);
+    B(g, d.s - 5, 426, d.e + 5, 429.5, 89, 92.5, M.creamDark);
+    B(g, d.s + 3, 426, d.e - 3, 428, 92.5, 97, M.cream);
+    addMesh(gring(WMAP, (d.s + d.e) / 2, 97, 427, 7, 0.9, Math.PI), M.gold, g);
+  }
+
+  /* ---------------- components (everything clickable) ---------------- */
+  var parts = [];
+  var groups = { structure: new THREE.Group(), roof: new THREE.Group(), furniture: new THREE.Group() };
+  scene.add(groups.structure); scene.add(groups.roof); scene.add(groups.furniture);
+  function part(cat, en, bn, sizeT, infoEn, infoBn, parent, extra) {
+    var g = new THREE.Group();
+    var p = { cat: cat, en: en, bn: bn, size: sizeT || "", infoEn: infoEn || "", infoBn: infoBn || "", group: g, inside: false };
+    if (extra) for (var k in extra) p[k] = extra[k];
+    g.userData.part = p;
+    parent.add(g); parts.push(p);
+    return g;
+  }
+
+  /* plinth, ground, yard */
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), M.ground);
+  ground.rotation.x = -Math.PI / 2; ground.position.y = Y(-30) - 0.02; ground.receiveShadow = true; scene.add(ground);
+  var yard = new THREE.Mesh(new THREE.CircleGeometry(40, 48), M.yard);
+  yard.rotation.x = -Math.PI / 2; yard.position.set(0, Y(-30) - 0.01, 2); yard.receiveShadow = true; scene.add(yard);
+
+  var gPlinth = part("structure", "Plinth", "প্লিন্থ", "2'-6\" high", "The whole floor sits 2'-6\" above the ground, above the highest flood seen here.", "পুরো মেঝে মাটি থেকে ২'-৬\" উঁচু, এলাকার সবচেয়ে বড় বন্যার পানির ওপরে।", groups.structure);
+  B(gPlinth, 0, 0, 455, 426, -30, 0, M.plinth);
+
+  /* room floors */
+  ROOMS.forEach(function (rm) {
+    var g = part("room", rm.en, rm.bn, rm.sz, rm.nEn, rm.nBn, groups.structure, { room: rm, inside: rm.k !== "verandah" });
+    rm.group = g;
+    rm.r.forEach(function (r) {
+      if (rm.k === "verandah") { B(g, r[0], r[1], r[2], r[3], -30, -2.4, M.plinth); B(g, r[0], r[1], r[2], r[3], -2.4, -2, M.fl_verandah, [16 * IN, 16 * IN]); return; }
+      B(g, r[0], r[1], r[2], r[3], 0, 0.4, M["fl_" + rm.fl], TILE_UV);
+    });
+  });
+
+  /* steps and verandah columns */
+  var gSteps = part("structure", "Steps", "সিঁড়ি", "4 steps · 6' wide", "Four steps from the verandah down to the yard, in line with the main door.", "বারান্দা থেকে উঠানে নামার ৪টি ধাপ, মূল দরজার সোজা সামনে।", groups.structure);
+  for (var si = 0; si < 4; si++) B(gSteps, 191.5, 474 + 10 * si, 263.5, 474 + 10 * (si + 1), -30, -2 - 5.6 * (si + 1), M.concrete);
+
+  /* walls with door and window openings */
+  var OPEN = [];
+  DOORS.forEach(function (d) { OPEN.push({ o: d.o, w1: d.w1, w2: d.w2, s: d.s, e: d.e, sill: 0, head: 84 }); });
+  WINDOWS.forEach(function (w) { var t = WIN_TYPES[w.id]; OPEN.push({ o: w.o, w1: w.w1, w2: w.w2, s: w.s, e: w.e, sill: t.sill, head: t.head }); });
+  var FACE = { "+x": 0, "-x": 1, "+z": 4, "-z": 5 }, OPP = { "+x": 1, "-x": 0, "+z": 5, "-z": 4 };
+  function wallMats(outer) {
+    if (!outer) return M.plaster;
+    var a = [M.brick, M.brick, M.brick, M.brick, M.brick, M.brick];
+    a[OPP[outer]] = M.plaster;
+    return a;
+  }
+  var gOuter = part("structure", "Outer walls", "বাইরের দেয়াল", "10\" red brick", "Exposed red brick outside, plastered inside. Ceiling height 10'-0\"; door and window tops at 7'-0\".", "বাইরে খোলা লাল ইট, ভেতরে প্লাস্টার। সিলিং ১০'-০\"; দরজা-জানালার মাথা ৭'-০\"।", groups.structure);
+  var gInner = part("structure", "Inner walls", "ভেতরের দেয়াল", "5\" brick, plastered", "Half-brick partition walls, plastered and painted on both sides.", "অর্ধেক ইটের পার্টিশন দেয়াল, দুই পাশে প্লাস্টার ও রং।", groups.structure, { inside: true });
+  WALLS.forEach(function (r) {
+    var x1 = r[0], z1 = r[1], x2 = r[2], z2 = r[3], outer = r[4], horiz = (x2 - x1) >= (z2 - z1);
+    var ops = OPEN.filter(function (o) {
+      return horiz ? (o.o === "h" && o.w1 >= z1 - 0.5 && o.w2 <= z2 + 0.5 && o.s >= x1 - 0.5 && o.e <= x2 + 0.5)
+                   : (o.o === "v" && o.w1 >= x1 - 0.5 && o.w2 <= x2 + 0.5 && o.s >= z1 - 0.5 && o.e <= z2 + 0.5);
+    }).sort(function (a, b) { return a.s - b.s; });
+    var target = outer ? gOuter : gInner, mats = wallMats(outer), a0 = horiz ? x1 : z1, a1 = horiz ? x2 : z2, cur = a0;
+    function seg(s, e, y1, y2) {
+      if (e - s < 0.01 || y2 - y1 < 0.01) return;
+      var g = horiz ? geoBox(s, y1, z1, e, y2, z2, BRICK_UV) : geoBox(x1, y1, s, x2, y2, e, BRICK_UV);
+      addMesh(g, mats, target);
+    }
+    ops.forEach(function (o) { seg(cur, o.s, 0, WALL_H); if (o.sill > 0) seg(o.s, o.e, 0, o.sill); seg(o.s, o.e, o.head, WALL_H); cur = o.e; });
+    seg(cur, a1, 0, WALL_H);
+  });
+
+  /* ---------------- painted inside walls, skirting and wall tiles ---------------- */
+  var PAINT = {
+    bed1: [0xd9e9cf, "mint green", "হালকা পুদিনা সবুজ"], bed2: [0xf5dac6, "soft peach", "হালকা পীচ রং"],
+    bed3: [0xd4e4f1, "sky blue", "আকাশি নীল"], bed4: [0xe7ddf0, "lavender", "হালকা বেগুনি"],
+    kitchen: [0xf6eab8, "butter yellow above white tiles", "সাদা টাইলসের ওপরে হালকা হলুদ"],
+    dining: [0xf3e7cd, "warm ivory", "উষ্ণ আইভরি"], drawing: [0xeedbb8, "light sand with a teak skirting", "হালকা বালু রং, সেগুন কাঠের স্কার্টিং"],
+    bathC: [0xeaf2f3, "aqua tiles up to 7 ft", "৭ ফুট পর্যন্ত নীলচে টাইলস"], bathL: [0xeaf2f3, "aqua tiles up to 7 ft", "৭ ফুট পর্যন্ত নীলচে টাইলস"],
+    bathR: [0xeaf2f3, "aqua tiles up to 7 ft", "৭ ফুট পর্যন্ত নীলচে টাইলস"], basin: [0xeaf2f3, "aqua tiles", "নীলচে টাইলস"]
+  };
+  function lineRoom(rm) {
+    var pc = PAINT[rm.k];
+    if (!pc) return;
+    var paint = mk(pc[0], { roughness: 0.92 }, true), wet = rm.fl === "wet" || rm.k === "basin", isK = rm.k === "kitchen";
+    var tileTop = wet ? (isK ? 66 : 84) : 0, tileM = isK ? MI.kitchenTile : MI.bathTile;
+    var pp = rm.group.userData.part;
+    pp.infoEn += " Walls: " + pc[1] + "."; pp.infoBn += " দেয়ালের রং: " + pc[2] + "।";
+    function bands(y1, y2) {
+      var out = [], cuts = wet ? [[0, tileTop, tileM], [tileTop, WALL_H, paint]] : [[0, 4, MI.skirting], [4, WALL_H, paint]];
+      cuts.forEach(function (b) { var a = Math.max(y1, b[0]), c = Math.min(y2, b[1]); if (c - a > 0.01) out.push([a, c, b[2]]); });
+      return out;
+    }
+    rm.r.forEach(function (r) {
+      var x1 = r[0], z1 = r[1], x2 = r[2], z2 = r[3];
+      var SIDES = [
+        { horiz: true, at: z1, lo: z1, hi: z1 + 0.4, hit: function (w) { return Math.abs(w[3] - z1) < 0.6 && w[0] < x2 && w[2] > x1; }, span: function (w) { return [Math.max(w[0], x1), Math.min(w[2], x2)]; }, op: function (o) { return o.o === "h" && Math.abs(o.w2 - z1) < 0.6; } },
+        { horiz: true, at: z2, lo: z2 - 0.4, hi: z2, hit: function (w) { return Math.abs(w[1] - z2) < 0.6 && w[0] < x2 && w[2] > x1; }, span: function (w) { return [Math.max(w[0], x1), Math.min(w[2], x2)]; }, op: function (o) { return o.o === "h" && Math.abs(o.w1 - z2) < 0.6; } },
+        { horiz: false, at: x1, lo: x1, hi: x1 + 0.4, hit: function (w) { return Math.abs(w[2] - x1) < 0.6 && w[1] < z2 && w[3] > z1; }, span: function (w) { return [Math.max(w[1], z1), Math.min(w[3], z2)]; }, op: function (o) { return o.o === "v" && Math.abs(o.w2 - x1) < 0.6; } },
+        { horiz: false, at: x2, lo: x2 - 0.4, hi: x2, hit: function (w) { return Math.abs(w[0] - x2) < 0.6 && w[1] < z2 && w[3] > z1; }, span: function (w) { return [Math.max(w[1], z1), Math.min(w[3], z2)]; }, op: function (o) { return o.o === "v" && Math.abs(o.w1 - x2) < 0.6; } }
+      ];
+      SIDES.forEach(function (sd) {
+        WALLS.filter(sd.hit).forEach(function (w) {
+          var sp = sd.span(w), cur = sp[0];
+          var ops = OPEN.filter(function (o) { return sd.op(o) && o.s < sp[1] && o.e > sp[0]; }).sort(function (a, b) { return a.s - b.s; });
+          function piece(s1, e1, y1, y2) {
+            if (e1 - s1 < 0.05) return;
+            bands(y1, y2).forEach(function (b) {
+              var lo = sd.lo, hi = sd.hi;
+              if (b[2] === MI.skirting) { if (lo === sd.at) hi = sd.at + 0.7; else lo = sd.at - 0.7; }
+              var g = sd.horiz ? geoBox(s1, b[0], lo, e1, b[1], hi, TILE_UV) : geoBox(lo, b[0], s1, hi, b[1], e1, TILE_UV);
+              addMesh(g, b[2], rm.group, false);
+            });
+          }
+          ops.forEach(function (o) {
+            var os = Math.max(o.s, sp[0]), oe = Math.min(o.e, sp[1]);
+            piece(cur, os, 0, WALL_H);
+            if (o.sill > 0) piece(os, oe, 0, o.sill);
+            piece(os, oe, o.head, WALL_H);
+            cur = oe;
+          });
+          piece(cur, sp[1], 0, WALL_H);
+        });
+      });
+    });
+  }
+  ROOMS.forEach(lineRoom);
+
+  /* sunshades (chhajja) over outside windows and the north doors */
+  var gSun = part("structure", "Sunshades", "সানশেড (কার্নিশ)", "1'-6\" deep", "Concrete sunshade over every outside window and the north doors. The west windows sit under the verandah roof instead.", "প্রতিটি বাইরের জানালা ও উত্তরের দরজার ওপর কংক্রিটের সানশেড। পশ্চিমের জানালাগুলো বারান্দার ছাদের নিচে।", groups.structure);
+  WINDOWS.forEach(function (w) {
+    if (w.id === "V") return;
+    if (w.o === "h" && w.w1 <= 0.1) B(gSun, w.s - 6, -18, w.e + 6, 0, 86, 89, M.concrete);
+    else if (w.o === "v" && w.w1 <= 0.1) B(gSun, -18, w.s - 6, 0, w.e + 6, 86, 89, M.concrete);
+    else if (w.o === "v" && w.w2 >= 454.9) B(gSun, 455, w.s - 6, 473, w.e + 6, 86, 89, M.concrete);
+  });
+  DOORS.forEach(function (d) { if (d.kind === "out") B(gSun, -24, d.s - 6, 0, d.e + 6, 86, 89, M.concrete); });
+
+  /* doors */
+  var doorPivots = [];
+  var LEAF = { main: M.woodDark, room: M.wood, bath: M.pvc, out: M.steelDoor };
+  DOORS.forEach(function (d) {
+    var t = DOOR_TYPES[d.id];
+    var g = part("door", d.id + " · " + d.en, d.id + " · " + d.bn, t.sz, t.en, t.bn, groups.structure, { inside: d.kind !== "main" && d.kind !== "out" });
+    if (d.arch) {
+      // show the arch as a thin timber frame so it can still be clicked
+      var fw = 2, mid = (d.w1 + d.w2) / 2;
+      B(g, d.s, d.w1 - 0.5, d.s + fw, d.w2 + 0.5, 0, 84, M.wood);
+      B(g, d.e - fw, d.w1 - 0.5, d.e, d.w2 + 0.5, 0, 84, M.wood);
+      B(g, d.s, d.w1 - 0.5, d.e, d.w2 + 0.5, 82, 84, M.wood);
+      return;
+    }
+    if (d.kind === "main") { mainDoor(g, d); return; }
+    var r = d.e - d.s, face = d.swing > 0 ? d.w2 : d.w1, inset = face - d.swing * 0.9, hx, hz, closedA, openA;
+    if (d.o === "h") {
+      hx = d.hinge === "s" ? d.s : d.e; hz = inset;
+      var ox = d.hinge === "s" ? d.e : d.s;
+      closedA = Math.atan2(0, Math.sign(ox - hx)); openA = Math.atan2(-d.swing, 0);
+    } else {
+      hz = d.hinge === "s" ? d.s : d.e; hx = inset;
+      var oz = d.hinge === "s" ? d.e : d.s;
+      closedA = Math.atan2(-Math.sign(oz - hz), 0); openA = Math.atan2(0, d.swing);
+    }
+    var pivot = new THREE.Group();
+    pivot.position.set(X(hx), 0, Z(hz));
+    var lg = new THREE.BoxGeometry(r * IN - 0.03, 83 * IN, 1.6 * IN); lg.translate(r * IN / 2, 83 * IN / 2 + 0.02, 0);
+    addMesh(lg, LEAF[d.kind], pivot);
+    var hg = new THREE.BoxGeometry(0.33, 0.07, 0.34); hg.translate(r * IN - 0.35, 36 * IN, 0);
+    addMesh(hg, M.steel, pivot);
+    var delta = openA - closedA;
+    while (delta > Math.PI) delta -= 2 * Math.PI;
+    while (delta <= -Math.PI) delta += 2 * Math.PI;
+    pivot.rotation.y = closedA;
+    pivot.userData.closedA = closedA; pivot.userData.openA = closedA + delta * 0.95;
+    g.add(pivot); doorPivots.push(pivot);
+  });
+
+  /* windows */
+  WINDOWS.forEach(function (w) {
+    var t = WIN_TYPES[w.id], rm = ROOM[w.room], sd = SIDE[w.side];
+    var g = part("window", w.id + " · " + rm.en + " (" + sd[0] + ")", w.id + " · " + rm.bn + " (" + sd[1] + ")",
+      t.sz + ", sill " + t.sill_t, t.en, t.bn, groups.structure, { sizeBn: bnNum(t.sz) + ", মেঝে থেকে " + bnNum(t.sill_t) });
+    var mid = (w.w1 + w.w2) / 2, fd = 2.5, fw = 1.5, sill = t.sill, head = t.head;
+    function bx(a1, a2, y1, y2, t1, t2, m) { return w.o === "h" ? B(g, a1, t1, a2, t2, y1, y2, m) : B(g, t1, a1, t2, a2, y1, y2, m); }
+    bx(w.s, w.e, sill, sill + fw, mid - fd / 2, mid + fd / 2, M.frame);
+    bx(w.s, w.e, head - fw, head, mid - fd / 2, mid + fd / 2, M.frame);
+    bx(w.s, w.s + fw, sill, head, mid - fd / 2, mid + fd / 2, M.frame);
+    bx(w.e - fw, w.e, sill, head, mid - fd / 2, mid + fd / 2, M.frame);
+    if (w.id !== "V") bx((w.s + w.e) / 2 - 0.75, (w.s + w.e) / 2 + 0.75, sill, head, mid - fd / 2, mid + fd / 2, M.frame);
+    var gl = bx(w.s + fw, w.e - fw, sill + fw, head - fw, mid - 0.2, mid + 0.2, M.glass); gl.castShadow = false;
+    if (w.id !== "V") {
+      var ot = w.w1 <= 0.1 ? w.w1 + 2 : w.w2 - 2;
+      for (var a = w.s + 5; a < w.e - 2; a += 5) bx(a - 0.3, a + 0.3, sill + fw, head - fw, ot - 0.3, ot + 0.3, M.grill);
+    } else {
+      for (var yy = sill + 4; yy < head - 2; yy += 4) bx(w.s + fw, w.e - fw, yy - 0.4, yy + 0.4, mid - 1, mid + 1, M.frame);
+    }
+  });
+
+  /* roof, parapet, skylight */
+  var slabMats = [M.concrete, M.concrete, M.concrete, M.ceiling, M.concrete, M.concrete];
+  var gSlab = part("roof", "Roof slab", "ছাদ", "5\" RCC", "Flat RCC roof over the house and the verandah, 10'-0\" above the floor. The 4' × 4' hole is for the skylight.", "বাড়ি ও বারান্দার ওপর সমান আরসিসি ছাদ, মেঝে থেকে ১০'-০\"। ৪' × ৪' ফাঁকা অংশটি স্কাইলাইটের জন্য।", groups.roof);
+  [[0, 0, 455, 219], [0, 267, 455, 474], [0, 219, 203.5, 267], [251.5, 219, 455, 267]].forEach(function (r) {
+    addMesh(geoBox(r[0], WALL_H, r[1], r[2], WALL_H + 5, r[3]), slabMats, gSlab);
+  });
+  var gPara = part("roof", "Parapet", "ছাদের রেলিং দেয়াল", "2'-6\" brick", "Low brick wall around the roof edge with a concrete coping on top.", "ছাদের কিনারায় নিচু ইটের দেয়াল, ওপরে কংক্রিটের কোপিং।", groups.roof);
+  [[0, 0, 455, 5], [0, 5, 5, 469], [450, 5, 455, 469]].forEach(function (r) { B(gPara, r[0], r[1], r[2], r[3], 125, 155, M.brick, BRICK_UV); });
+  [[-1, -1, 456, 6], [-1, 6, 6, 468], [449, 6, 456, 468]].forEach(function (r) { B(gPara, r[0], r[1], r[2], r[3], 155, 157, M.concrete); });
+  var gSky = part("roof", "Skylight", "স্কাইলাইট", "4' × 4'", "Over the dining table: raised brick curb, fixed glass on top, and an MS grill underneath for security.", "ডাইনিং টেবিলের ওপরে: উঁচু ইটের কার্ব, ওপরে স্থায়ী কাচ, আর নিরাপত্তার জন্য নিচে এমএস গ্রিল।", groups.roof);
+  [[198.5, 214, 256.5, 219], [198.5, 267, 256.5, 272], [198.5, 219, 203.5, 267], [251.5, 219, 256.5, 267]].forEach(function (r) { B(gSky, r[0], r[1], r[2], r[3], 125, 143, M.brick, BRICK_UV); });
+  var sg = B(gSky, 198.5, 214, 256.5, 272, 143, 144, M.glass); sg.castShadow = false;
+  for (var gx = 207.5; gx < 251; gx += 8) B(gSky, gx - 0.4, 219, gx + 0.4, 267, 118, 119, M.grill);
+
+  /* ---------------- decorative verandah: columns, arches, grill, gate, balustrade ---------------- */
+  var ZC = 469, RISE = 18, BAYS = [[10, 151], [161, 294], [304, 445]], COLS = [0, 151, 294, 445];
+  function archV(u, span) { var R = (span * span / 4 + RISE * RISE) / (2 * RISE); return (RISE - R) + Math.sqrt(Math.max(0, R * R - (u - span / 2) * (u - span / 2))); }
+  var gCols = part("structure", "Verandah columns", "বারান্দার খুঁটি", "10\" × 10\", plastered",
+    "Plastered brick columns with a stepped base, a moulded band and a capital that carries the arches.",
+    "প্লাস্টার করা ইটের খুঁটি: ধাপকাটা বেস, মাঝে নকশার ব্যান্ড, আর ওপরে খিলান ধরার ক্যাপিটাল।", groups.structure, { sizeBn: "১০\" × ১০\", প্লাস্টার" });
+  COLS.forEach(function (cx) {
+    B(gCols, cx - 3, 461, cx + 13, 477, -2, 3, M.creamDark);
+    B(gCols, cx - 1.5, 462.5, cx + 11.5, 475.5, 3, 7, M.cream);
+    B(gCols, cx, 464, cx + 10, 474, 7, 76, M.cream);
+    B(gCols, cx - 0.6, 463.4, cx + 10.6, 474.6, 36, 38.5, M.creamDark);
+    B(gCols, cx - 1.5, 462.5, cx + 11.5, 475.5, 76, 80, M.creamDark);
+    B(gCols, cx - 3, 461, cx + 13, 477, 80, 84, M.cream);
+  });
+  var gArch = part("structure", "Verandah arches", "বারান্দার খিলান", "3 arches",
+    "Three segmental arches with keystones, each filled with a sunburst grill, under a moulded cornice.",
+    "তিনটি খিলান, মাথায় কি-স্টোন, ভেতরে সূর্যরশ্মি নকশার গ্রিল, ওপরে কার্নিশ।", groups.structure, { sizeBn: "৩টি খিলান" });
+  BAYS.forEach(function (b) {
+    var a = b[0], span = b[1] - b[0], sh = new THREE.Shape(), N = 48, i;
+    sh.moveTo(0, 0);
+    for (i = 1; i <= N; i++) { var u = span * i / N; sh.lineTo(u * IN, archV(u, span) * IN); }
+    sh.lineTo(span * IN, 36 * IN); sh.lineTo(0, 36 * IN); sh.lineTo(0, 0);
+    var eg = new THREE.ExtrudeGeometry(sh, { depth: 10 * IN, bevelEnabled: false });
+    eg.translate(X(a), Y(84), Z(464));
+    addMesh(eg, M.cream, gArch);
+    var mid = a + span / 2;
+    B(gArch, mid - 3, 462.5, mid + 3, 475.5, 84 + RISE - 3, 84 + RISE + 7, M.creamDark);
+  });
+  B(gArch, -3, 474, 458, 477.5, 113, 116.5, M.creamDark);
+  B(gArch, -3, 474, 458, 476, 116.5, 120, M.cream);
+
+  function grillPanel(c, a, b, y0, y1, zc) {
+    var n = Math.max(2, Math.round((b - a) / 4.5)), step = (b - a) / n, mid = (y0 + y1) / 2, b1 = mid - 6, b2 = mid + 6, i;
+    c.add("grill", gbox(WMAP, a, y0, zc - 0.6, b, y0 + 1.2, zc + 0.6));
+    c.add("grill", gbox(WMAP, a, y1 - 1.2, zc - 0.6, b, y1, zc + 0.6));
+    c.add("grill", gbox(WMAP, a, y0, zc - 0.6, a + 1.2, y1, zc + 0.6));
+    c.add("grill", gbox(WMAP, b - 1.2, y0, zc - 0.6, b, y1, zc + 0.6));
+    c.add("grill", gbox(WMAP, a, b1 - 0.5, zc - 0.5, b, b1 + 0.5, zc + 0.5));
+    c.add("grill", gbox(WMAP, a, b2 - 0.5, zc - 0.5, b, b2 + 0.5, zc + 0.5));
+    for (i = 1; i < n; i++) { var x = a + i * step; c.add("grill", gbox(WMAP, x - 0.35, y0 + 1.2, zc - 0.35, x + 0.35, y1 - 1.2, zc + 0.35)); }
+    for (i = 0; i < n; i++) {
+      var cx = a + (i + 0.5) * step, r = Math.min(step * 0.42, 4.6), dy = y0 + (b1 - y0) / 2, dr = Math.min(step * 0.36, 3.4);
+      c.add("gold", gring(WMAP, cx, mid, zc, r, 0.32));
+      c.add("grill", gring(WMAP, cx, y1 - 1.2, zc, step * 0.42, 0.26, Math.PI, Math.PI));
+      c.add("grill", grod(WMAP, cx - dr, dy, cx, dy + dr, zc, 0.5)); c.add("grill", grod(WMAP, cx, dy + dr, cx + dr, dy, zc, 0.5));
+      c.add("grill", grod(WMAP, cx + dr, dy, cx, dy - dr, zc, 0.5)); c.add("grill", grod(WMAP, cx, dy - dr, cx - dr, dy, zc, 0.5));
+      c.add("gold", gring(WMAP, cx, b2 + (y1 - b2) / 2 - 1, zc, 1.4, 0.3));
+    }
+  }
+  function sunburst(c, a, b, zc) {
+    var span = b - a, mid = (a + b) / 2;
+    c.add("grill", gbox(WMAP, a, 83.4, zc - 0.6, b, 84.6, zc + 0.6));
+    c.add("gold", gring(WMAP, mid, 84, zc, 6, 0.5, Math.PI));
+    c.add("gold", gring(WMAP, mid, 84, zc, 3, 0.45, Math.PI));
+    for (var deg = 12; deg <= 168; deg += 12) {
+      var th = deg * Math.PI / 180, r = 7;
+      while (r < span) { var px = mid + r * Math.cos(th), py = r * Math.sin(th); if (py >= archV(px - a, span) - 0.8) break; r += 0.5; }
+      c.add("grill", grod(WMAP, mid + 6.4 * Math.cos(th), 84 + 6.4 * Math.sin(th), mid + r * Math.cos(th), 84 + r * Math.sin(th), zc, 0.55));
+    }
+  }
+  var gGrill = part("structure", "Verandah grill", "বারান্দার গ্রিল", "on a 2'-6\" knee wall",
+    "Decorative MS grill on a low brick wall: bars, a band of gold rings, diamonds below and a lace edge on top, painted deep green.",
+    "নিচু ইটের দেয়ালের ওপর নকশা করা এমএস গ্রিল: শিক, সোনালি রিংয়ের সারি, নিচে ডায়মন্ড আর ওপরে লেসের মতো কিনারা, গাঢ় সবুজ রং।", groups.structure, { sizeBn: "২'-৬\" নিচু দেয়ালের ওপর" });
+  var gc = new Collector();
+  [[10, 151], [161, 183.5], [271.5, 294], [304, 445]].forEach(function (k) {
+    B(gGrill, k[0], 466.5, k[1], 471.5, -2, 28, M.brick, BRICK_UV);
+    B(gGrill, k[0], 465.5, k[1], 472.5, 28, 30, M.cream);
+    grillPanel(gc, k[0], k[1], 30, 84, ZC);
+  });
+  BAYS.forEach(function (b) { sunburst(gc, b[0], b[1], ZC); });
+  gc.flush(gGrill, { grill: M.iron, gold: M.gold });
+
+  var gGate = part("door", "Verandah grill gate", "বারান্দার গ্রিল গেট", "6' × 7' · 2 leaves",
+    "Two-leaf iron gate in line with the steps: a gold medallion on each leaf, a solid kick plate at the bottom and a lace edge on top. Opens inward onto the verandah.",
+    "সিঁড়ির সোজা দুই পাল্লার লোহার গেট: প্রতি পাল্লায় সোনালি মেডালিয়ন, নিচে শক্ত পাত, ওপরে লেসের কিনারা। ভেতরে বারান্দার দিকে খোলে।", groups.structure, { sizeBn: "৬' × ৭' · দুই পাল্লা" });
+  [[183.5, 191.5], [263.5, 271.5]].forEach(function (q) {
+    B(gGate, q[0], 465, q[1], 473, -2, 80, M.cream);
+    B(gGate, q[0] - 1, 464, q[1] + 1, 474, -2, 2, M.creamDark);
+    B(gGate, q[0] - 1, 464, q[1] + 1, 474, 78, 84, M.creamDark);
+  });
+  [[191.5, 1], [263.5, -1]].forEach(function (h) {
+    var pivot = new THREE.Group(), holder = new THREE.Group(), c = new Collector(), L = 36, H = 85.5, u;
+    pivot.position.set(X(h[0]), Y(-2), Z(ZC));
+    c.add("grill", gbox(LMAP, 0, 0, -0.75, 1.5, H, 0.75));
+    c.add("grill", gbox(LMAP, L - 1.5, 0, -0.75, L, H, 0.75));
+    [0, 14, 48, H - 1.5].forEach(function (v) { c.add("grill", gbox(LMAP, 1.5, v, -0.75, L - 1.5, v + 1.5, 0.75)); });
+    c.add("grill", gbox(LMAP, 1.5, 1.5, -0.2, L - 1.5, 14, 0.2));
+    c.add("gold", gring(LMAP, L / 2, 7.75, 0, 3.6, 0.4));
+    for (u = 4.5; u < L - 2; u += 4.5) c.add("grill", gbox(LMAP, u - 0.35, 15.5, -0.35, u + 0.35, H - 1.5, 0.35));
+    c.add("gold", gring(LMAP, L / 2, 31.75, 0, 11, 0.55));
+    c.add("gold", gring(LMAP, L / 2, 31.75, 0, 5.2, 0.45));
+    [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(function (dd) { c.add("gold", gring(LMAP, L / 2 + dd[0] * 8.1, 31.75 + dd[1] * 8.1, 0, 2.5, 0.35)); });
+    [4.5, 13.5, 22.5, 31.5].forEach(function (x) { c.add("gold", gring(LMAP, x, 66.5, 0, 3.4, 0.35)); });
+    for (u = 2.25; u < L; u += 4.5) c.add("grill", gring(LMAP, u, H - 1.5, 0, 2.1, 0.28, Math.PI, Math.PI));
+    c.add("gold", gbox(LMAP, L - 5, 38, -1.4, L - 3.5, 46, 1.4));
+    c.flush(holder, { grill: M.iron, gold: M.gold });
+    pivot.add(holder); gGate.add(pivot);
+    swingTo(pivot, h[1] > 0 ? 0 : Math.PI, Math.PI / 2, 0.92);
+  });
+
+  var gBal = part("roof", "Front balustrade", "সামনের রেলিং (বালাস্টার)", "2'-6\" high",
+    "Vase-shaped balusters between pedestals over each column, along the front of the roof.",
+    "ছাদের সামনে খুঁটির ওপর পেডেস্টাল আর মাঝে ফুলদানি আকারের বালাস্টার।", groups.roof, { sizeBn: "২'-৬\" উঁচু" });
+  B(gBal, 0, 468.5, 455, 474.5, 125, 129, M.cream);
+  B(gBal, -1, 468, 456, 475, 150, 153.5, M.cream);
+  B(gBal, -1.5, 467.5, 456.5, 475.5, 153.5, 156, M.creamDark);
+  var PED = [0, 151, 294, 445, 75.5, 222.5, 369.5];
+  PED.forEach(function (px) { B(gBal, px, 467.5, px + 10, 475.5, 129, 150, M.cream); });
+  var balProf = [[0, 0], [2.2, 0], [2.2, 1.2], [1.3, 2.6], [1.15, 5], [2.4, 11], [1.2, 17], [1.4, 18.8], [2.2, 19.8], [2.2, 21], [0, 21]]
+    .map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); });
+  var balGeo = new THREE.LatheGeometry(balProf, 12), bcol = new Collector();
+  for (var bx = 4; bx < 452; bx += 6.5) {
+    if (PED.some(function (px) { return bx > px - 3 && bx < px + 13; })) continue;
+    var bg = balGeo.clone(); bg.translate(X(bx), Y(129), Z(471.5)); bcol.add("bal", bg);
+  }
+  bcol.flush(gBal, { bal: M.cream });
+
+
+  /* ---------------- furniture ---------------- */
+  var F = groups.furniture;
+  function furn(en, bn, sz, room, szBn) { return part("furniture", en + " · " + ROOM[room].en, bn + " · " + ROOM[room].bn, sz, "", "", F, { inside: true, sizeBn: szBn }); }
+  function bed(g, x, z, L, Wd, head, kantha) {
+    B(g, x, z, x + L, z + Wd, 0, 14, M.wood);
+    B(g, x + 1, z + 1, x + L - 1, z + Wd - 1, 14, 22, M.mattress);
+    if (head === "e") B(g, x + L - 2, z, x + L, z + Wd, 0, 40, M.wood); else B(g, x, z, x + 2, z + Wd, 0, 40, M.wood);
+    var pw = (Wd - 12) / 2, px = head === "e" ? x + L - 15 : x + 3;
+    B(g, px, z + 4, px + 12, z + 4 + pw, 22, 26, M.pillow);
+    B(g, px, z + 8 + pw, px + 12, z + 8 + 2 * pw, 22, 26, M.pillow);
+    if (head === "e") B(g, x + 1, z + 1, x + 52, z + Wd - 1, 22, 23.4, M.kantha[kantha]);
+    else B(g, x + L - 52, z + 1, x + L - 1, z + Wd - 1, 22, 23.4, M.kantha[kantha]);
+  }
+  bed(furn("Bed", "খাট", "6' × 7'", "bed1", "৬' × ৭'"), 70, 30, 84, 72, "e", 0);
+  bed(furn("Bed", "খাট", "6' × 7'", "bed2", "৬' × ৭'"), 301, 30, 84, 72, "w", 1);
+  bed(furn("Bed", "খাট", "5' × 7'", "bed3", "৫' × ৭'"), 70, 312, 84, 60, "e", 2);
+  bed(furn("Bed", "খাট", "5' × 7'", "bed4", "৫' × ৭'"), 301, 312, 84, 60, "w", 3);
+  [["bed1", [[136, 12], [136, 102]]], ["bed2", [[301, 12], [301, 102]]], ["bed3", [[136, 294], [136, 372]]], ["bed4", [[301, 294], [301, 372]]]].forEach(function (a) {
+    var g = furn("Side tables", "সাইড টেবিল", "1'-6\" × 1'-6\"", a[0], "১'-৬\" × ১'-৬\"");
+    a[1].forEach(function (p) { B(g, p[0], p[1], p[0] + 18, p[1] + 18, 0, 22, M.wood); });
+  });
+  [["bed1", [10, 120, 32, 162]], ["bed2", [423, 120, 445, 162]], ["bed3", [92, 398, 134, 416]], ["bed4", [397, 248, 439, 270]]].forEach(function (a) {
+    var g = furn("Almirah", "আলমারি", "3'-6\" × 1'-10\" × 6' high", a[0], "৩'-৬\" × ১'-১০\" × ৬' উঁচু"), r = a[1];
+    B(g, r[0], r[1], r[2], r[3], 0, 72, M.almirah);
+  });
+  [["bed1", 80, 98], ["bed2", 339, 357]].forEach(function (a) {
+    var g = furn("Dressing table", "ড্রেসিং টেবিল", "3' × 1'-6\"", a[0], "৩' × ১'-৬\"");
+    B(g, a[1], 160, a[1] + 36, 178, 0, 30, M.wood);
+    B(g, a[1] + 6, 176, a[1] + 30, 178, 30, 64, M.mirror);
+    cyl(g, a[2], 150, 6, 0, 18, M.wood);
+  });
+  [["bed3", 20, 29], ["bed4", 399, 408]].forEach(function (a) {
+    var g = furn("Study table and chair", "পড়ার টেবিল ও চেয়ার", "3' × 2'", a[0], "৩' × ২'");
+    B(g, a[1], 392, a[1] + 36, 416, 28, 30, M.wood);
+    B(g, a[1] + 1, 393, a[1] + 3, 415, 0, 28, M.wood); B(g, a[1] + 33, 393, a[1] + 35, 415, 0, 28, M.wood);
+    B(g, a[2], 374, a[2] + 18, 390, 16, 18, M.wood);
+    B(g, a[2], 374, a[2] + 18, 376, 18, 34, M.wood);
+    B(g, a[2], 376, a[2] + 2, 390, 0, 16, M.wood); B(g, a[2] + 16, 376, a[2] + 18, 390, 0, 16, M.wood);
+  });
+  (function () {
+    var g = furn("Counter, stove and sink", "কাউন্টার, চুলা ও সিংক", "2'-8\" high, 2' deep", "kitchen", "২'-৮\" উঁচু, ২' গভীর");
+    B(g, 159, 10, 243, 34, 0, 32, M.cabinet); B(g, 219, 34, 243, 90, 0, 32, M.cabinet);
+    B(g, 159, 10, 243, 34, 32, 33.5, M.granite); B(g, 219, 34, 243, 90, 32, 33.5, M.granite);
+    B(g, 181, 14, 209, 30, 33.5, 35.5, M.black);
+    cyl(g, 188, 22, 3.5, 35.5, 36.2, M.steel); cyl(g, 202, 22, 3.5, 35.5, 36.2, M.steel);
+    B(g, 222, 48, 240, 72, 33.5, 33.9, M.steel);
+    cyl(g, 231, 44, 0.8, 33.5, 42, M.steel);
+    var fr = furn("Fridge", "ফ্রিজ", "2'-4\" × 2'-4\" × 5'-2\" high", "kitchen", "২'-৪\" × ২'-৪\" × ৫'-২\" উঁচু");
+    B(fr, 161, 100, 189, 128, 0, 62, M.fridge);
+    var rk = furn("Rack", "তাক", "1'-4\" × 3'-10\"", "kitchen", "১'-৪\" × ৩'-১০\"");
+    B(rk, 159, 50, 175, 52, 0, 60, M.wood); B(rk, 159, 94, 175, 96, 0, 60, M.wood);
+    [0, 20, 40, 58].forEach(function (y) { B(rk, 159, 50, 175, 96, y, y + 2, M.wood); });
+  })();
+  function toilet(room, tankX, cz, face) {
+    var g = furn("Toilet", "টয়লেট", "set north–south", room, "উত্তর-দক্ষিণ বরাবর");
+    if (face > 0) { B(g, tankX, cz - 8, tankX + 6, cz + 8, 14, 30, M.ceramic); cyl(g, tankX + 15.5, cz, 7.5, 0, 15, M.ceramic, 9.5 / 7.5); }
+    else { B(g, tankX - 6, cz - 8, tankX, cz + 8, 14, 30, M.ceramic); cyl(g, tankX - 15.5, cz, 7.5, 0, 15, M.ceramic, 9.5 / 7.5); }
+  }
+  toilet("bathC", 296, 24, -1); toilet("bathL", 10, 228, 1); toilet("bathR", 445, 228, -1);
+  (function () {
+    var g = furn("Wash basin", "বেসিন", "1'-8\" × 1'-4\"", "basin", "১'-৮\" × ১'-৪\"");
+    cyl(g, 289, 120, 3, 0, 28, M.ceramic); B(g, 280, 110, 296, 130, 28, 33, M.ceramic);
+    cyl(g, 293, 120, 0.7, 33, 38, M.steel);
+  })();
+  (function () {
+    var g = furn("Dining table and 6 chairs", "ডাইনিং টেবিল ও ৬টি চেয়ার", "5' × 3' table", "dining", "৫' × ৩' টেবিল");
+    B(g, 197.5, 225, 257.5, 261, 28, 30, M.wood);
+    [[199, 227], [254, 227], [199, 257], [254, 257]].forEach(function (p) { B(g, p[0], p[1], p[0] + 2, p[1] + 2, 0, 28, M.wood); });
+    [[205, 207, 18, 16, "n"], [232, 207, 18, 16, "n"], [205, 263, 18, 16, "s"], [232, 263, 18, 16, "s"], [179, 234, 16, 18, "w"], [259.5, 234, 16, 18, "e"]].forEach(function (c) {
+      var x = c[0], z = c[1], w = c[2], h = c[3];
+      B(g, x, z, x + w, z + h, 16, 18, M.wood);
+      B(g, x + 1, z + 1, x + 3, z + 3, 0, 16, M.wood); B(g, x + w - 3, z + 1, x + w - 1, z + 3, 0, 16, M.wood);
+      B(g, x + 1, z + h - 3, x + 3, z + h - 1, 0, 16, M.wood); B(g, x + w - 3, z + h - 3, x + w - 1, z + h - 1, 0, 16, M.wood);
+      if (c[4] === "n") B(g, x, z, x + w, z + 2, 18, 36, M.wood);
+      if (c[4] === "s") B(g, x, z + h - 2, x + w, z + h, 18, 36, M.wood);
+      if (c[4] === "w") B(g, x, z, x + 2, z + h, 18, 36, M.wood);
+      if (c[4] === "e") B(g, x + w - 2, z, x + w, z + h, 18, 36, M.wood);
+    });
+  })();
+  (function () {
+    var g = furn("Sofa (3 seats)", "সোফা (৩ সিট)", "6'-6\" × 2'-8\"", "drawing", "৬'-৬\" × ২'-৮\"");
+    B(g, 159, 330, 191, 408, 0, 16, M.sofa); B(g, 159, 330, 167, 408, 16, 32, M.sofa);
+    B(g, 159, 330, 191, 334, 16, 24, M.sofa); B(g, 159, 404, 191, 408, 16, 24, M.sofa);
+    var ac = furn("Armchairs (2)", "সিঙ্গেল সোফা (২টি)", "2'-2\" × 2'-2\" each", "drawing", "প্রতিটি ২'-২\" × ২'-২\"");
+    [334, 366].forEach(function (z) {
+      B(ac, 270, z, 296, z + 26, 0, 16, M.sofa); B(ac, 290, z, 296, z + 26, 16, 32, M.sofa);
+      B(ac, 270, z, 290, z + 3, 16, 24, M.sofa); B(ac, 270, z + 23, 290, z + 26, 16, 24, M.sofa);
+    });
+    var ct = furn("Centre table", "সেন্টার টেবিল", "3' × 1'-10\"", "drawing", "৩' × ১'-১০\"");
+    B(ct, 209, 350, 245, 372, 14, 16, M.woodDark); B(ct, 211, 352, 243, 370, 0, 14, M.wood);
+  })();
+
+
+  (function () {
+    var seat = furn("Bench and 2 moras", "বেঞ্চ ও ২টি মোড়া", "bench 5'-6\" long", "verandah", "বেঞ্চ ৫'-৬\" লম্বা");
+    seat.userData.part.inside = false;
+    B(seat, 24, 430, 90, 446, 13, 15.5, M.wood);
+    [[26, 432], [86, 432], [26, 442], [86, 442]].forEach(function (q) { B(seat, q[0], q[1], q[0] + 2, q[1] + 2, -2, 13, M.wood); });
+    B(seat, 24, 427, 90, 429, 15.5, 33, M.wood);
+    var mora = new THREE.LatheGeometry([[0, 0], [8, 0], [8, 1], [5.2, 8], [8, 15], [8, 16.5], [0, 16.5]].map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); }), 20);
+    [[383, 442], [410, 447]].forEach(function (q) { var m = addMesh(mora.clone(), M.cane, seat); m.position.set(X(q[0]), Y(-2), Z(q[1])); });
+    var pots = furn("Flower pots", "ফুলের টব", "4 pots by the steps", "verandah", "সিঁড়ির পাশে ৪টি টব");
+    pots.userData.part.inside = false;
+    var potGeo = new THREE.LatheGeometry([[0, 0], [5.5, 0], [7.5, 13], [8.5, 14], [8.5, 15.5], [0, 15.5]].map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); }), 20);
+    [[176, 486], [279, 486], [176, 504], [279, 504]].forEach(function (q) {
+      var m = addMesh(potGeo.clone(), M.terracotta, pots); m.position.set(X(q[0]), Y(-30), Z(q[1]));
+      [[0, 0, 6, 22], [3, 2, 4.5, 19], [-3, 1, 4.5, 19], [0, -3, 4, 18]].forEach(function (l) {
+        var sp = addMesh(new THREE.IcosahedronGeometry(l[2] * IN, 1), M.leafBright, pots); sp.position.set(X(q[0] + l[0]), Y(-30 + l[3]), Z(q[1] + l[1]));
+      });
+      [[2, 3], [-2.5, -1], [1, -3.5]].forEach(function (f, i) {
+        var fl = addMesh(new THREE.SphereGeometry(1.6 * IN, 10, 8), i === 1 ? M.rose : M.marigold, pots); fl.position.set(X(q[0] + f[0]), Y(-30 + 26), Z(q[1] + f[1]));
+      });
+    });
+    var lamps = furn("Hanging lanterns", "ঝুলন্ত লণ্ঠন", "3 lanterns", "verandah", "৩টি লণ্ঠন");
+    lamps.userData.part.inside = false;
+    [80.5, 227.5, 374.5].forEach(function (x) {
+      B(lamps, x - 0.3, 444.7, x + 0.3, 445.3, 104, 120, M.gold);
+      B(lamps, x - 3.6, 441.4, x + 3.6, 448.6, 103, 104.5, M.gold);
+      var lg = addMesh(geoBox(x - 3, 94, 442, x + 3, 103, 448), M.lamp, lamps); lg.castShadow = false;
+      B(lamps, x - 3.6, 441.4, x + 3.6, 448.6, 92.5, 94, M.gold);
+    });
+  })();
+
+  /* ---------------- interior decoration ---------------- */
+  var fans = [];
+  function ball(g, x, z, y, r, mat) { var m = addMesh(new THREE.SphereGeometry(r * IN, 12, 8), mat, g); m.position.set(X(x), Y(y), Z(z)); return m; }
+  function lathe(pts, seg) { return new THREE.LatheGeometry(pts.map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); }), seg || 16); }
+  (function () {
+    var g = part("furniture", "Ceiling fans", "সিলিং ফ্যান", "6 fans, 48\"", "A 48\" ceiling fan in each bedroom, the dining and the drawing room.", "প্রতিটি শোবার ঘর, ডাইনিং ও ড্রইং রুমে একটি করে ৪৮\" সিলিং ফ্যান।", F, { inside: true, sizeBn: "৬টি ফ্যান, ৪৮\"" });
+    [[82, 94], [373, 94], [82, 330], [373, 330], [227.5, 165], [227.5, 345]].forEach(function (q) {
+      cyl(g, q[0], q[1], 0.5, 108, 120, MI.rod);
+      cyl(g, q[0], q[1], 4, 104, 108, MI.fanBody);
+      var rotor = new THREE.Group(); rotor.position.set(X(q[0]), Y(105.5), Z(q[1]));
+      for (var i = 0; i < 3; i++) {
+        var bg = new THREE.BoxGeometry(21 * IN, 0.3 * IN, 4.5 * IN); bg.translate(14.5 * IN, 0, 0); bg.rotateY(i * Math.PI * 2 / 3);
+        addMesh(bg, MI.fanBlade, rotor);
+      }
+      g.add(rotor); fans.push(rotor);
+    });
+  })();
+  (function () {
+    var g = part("furniture", "Curtains", "পর্দা", "every bedroom and drawing-room window", "Cotton curtains on brass rods, a different colour in each room.", "পিতলের রডে সুতির পর্দা, প্রতিটি ঘরে আলাদা রং।", F, { inside: true, sizeBn: "প্রতিটি শোবার ঘর ও ড্রইং রুমের জানালায়" });
+    WINDOWS.forEach(function (w) {
+      var col = CURTAIN[w.room];
+      if (!col || w.id === "V") return;
+      var mat = mk(col, { roughness: 1, side: THREE.DoubleSide }, true);
+      var inner = w.w1 <= 0.1 ? w.w2 : w.w1, dir = w.w1 <= 0.1 ? 1 : -1, t = inner + dir * 2.2;
+      var rg = new THREE.CylinderGeometry(0.45 * IN, 0.45 * IN, (w.e - w.s + 16) * IN, 8); rg.rotateZ(Math.PI / 2);
+      if (w.o === "v") rg.rotateY(Math.PI / 2);
+      var rod = addMesh(rg, MI.rod, g);
+      if (w.o === "h") rod.position.set(X((w.s + w.e) / 2), Y(90), Z(t)); else rod.position.set(X(t), Y(90), Z((w.s + w.e) / 2));
+      var panels = w.id === "W2" ? [[w.s - 2, w.s + 6], [w.e - 6, w.e + 2]] : [[w.s - 6, w.s + 6], [w.e - 6, w.e + 6]];
+      panels.forEach(function (pp) {
+        var wd = pp[1] - pp[0], ht = 90 - 32, pg = new THREE.PlaneGeometry(wd * IN, ht * IN, 14, 1), pos = pg.attributes.position;
+        for (var i = 0; i < pos.count; i++) pos.setZ(i, Math.sin((pos.getX(i) / (wd * IN)) * Math.PI * 6) * 0.8 * IN);
+        pg.computeVertexNormals();
+        if (w.o === "v") pg.rotateY(Math.PI / 2);
+        var m = addMesh(pg, mat, g); m.castShadow = false;
+        var cx = (pp[0] + pp[1]) / 2, cy = 32 + ht / 2;
+        if (w.o === "h") m.position.set(X(cx), Y(cy), Z(t)); else m.position.set(X(t), Y(cy), Z(cx));
+      });
+    });
+  })();
+  function painting(parent, axis, face, dir, c, y1, y2, wd, tex) {
+    var lo = Math.min(face + dir * 0.4, face + dir * 1.4), hi = Math.max(face + dir * 0.4, face + dir * 1.4), a1 = c - wd / 2, a2 = c + wd / 2, fw = 1.6;
+    function fr(p1, p2, q1, q2) { if (axis === "x") B(parent, lo, p1, hi, p2, q1, q2, MI.frame); else B(parent, p1, lo, p2, hi, q1, q2, MI.frame); }
+    fr(a1, a2, y1, y1 + fw); fr(a1, a2, y2 - fw, y2); fr(a1, a1 + fw, y1, y2); fr(a2 - fw, a2, y1, y2);
+    var m = new THREE.Mesh(new THREE.PlaneGeometry((wd - 2 * fw) * IN, (y2 - y1 - 2 * fw) * IN), mk(0xffffff, { map: tex, roughness: 0.8 }, true));
+    var mid = face + dir * 0.9;
+    if (axis === "x") { m.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; m.position.set(X(mid), Y((y1 + y2) / 2), Z(c)); }
+    else { m.rotation.y = dir > 0 ? 0 : Math.PI; m.position.set(X(c), Y((y1 + y2) / 2), Z(mid)); }
+    m.receiveShadow = true; parent.add(m);
+  }
+  (function () {
+    var PAL = [["#f6b37a", "#fbe3c0", "#fff4d6", "#6f9fc0"], ["#7fb3dc", "#d7ebf5", "#fff6c9", "#5b8fb8"], ["#e0735a", "#f7c48a", "#ffe19a", "#b86a5a"], ["#6d6aa8", "#e7a7a0", "#ffd0a0", "#6a6e9e"], ["#9cc9e8", "#f1e6c8", "#fff1b8", "#4f86a8"]];
+    [["bed1", 154, -1, 66], ["bed2", 301, 1, 66], ["bed3", 154, -1, 342], ["bed4", 301, 1, 342]].forEach(function (q, i) {
+      var g = furn("Painting", "ছবি", "2'-6\" × 1'-6\"", q[0], "২'-৬\" × ১'-৬\"");
+      painting(g, "x", q[1], q[2], q[3], 43, 61, 30, paintingTexture(101 + i, PAL[i]));
+    });
+    var gd = furn("Painting", "ছবি", "3'-4\" × 1'-8\"", "drawing", "৩'-৪\" × ১'-৮\"");
+    painting(gd, "x", 159, 1, 369, 38, 58, 40, paintingTexture(120, PAL[4]));
+    var gc = furn("Wall clock", "দেয়াল ঘড়ি", "1' across", "dining", "১' চওড়া");
+    var cg = new THREE.CylinderGeometry(6 * IN, 6 * IN, 0.9 * IN, 32); cg.rotateX(-Math.PI / 2);
+    var clk = addMesh(cg, [MI.frame, mk(0xffffff, { map: clockTexture(), roughness: 0.6 }, true), MI.frame], gc);
+    clk.position.set(X(200), Y(52), Z(302.1));
+  })();
+  (function () {
+    var g = part("furniture", "Rugs and kantha mats", "কার্পেট ও নকশি কাঁথার মাদুর", "drawing room and bedrooms", "A patterned carpet in the drawing room and a nakshi-kantha mat beside every bed.", "ড্রইং রুমে নকশা করা কার্পেট আর প্রতিটি খাটের পাশে নকশি কাঁথার মাদুর।", F, { inside: true, sizeBn: "ড্রইং রুম ও শোবার ঘরে" });
+    function rug(x1, z1, x2, z2, tex) {
+      var pg = new THREE.PlaneGeometry((x2 - x1) * IN, (z2 - z1) * IN); pg.rotateX(-Math.PI / 2);
+      var m = addMesh(pg, mk(0xffffff, { map: tex, roughness: 1 }, true), g, false);
+      m.position.set(X((x1 + x2) / 2), Y(0.55), Z((z1 + z2) / 2));
+    }
+    rug(196, 336, 262, 392, rugTexture());
+    rug(80, 106, 130, 128, kanthaTexture("#f1e4c8", "#b33a3a"));
+    rug(325, 106, 377, 128, kanthaTexture("#f3e6cf", "#2f5f8a"));
+    rug(80, 288, 130, 310, kanthaTexture("#efe2c6", "#2f7a5a"));
+    rug(325, 288, 377, 310, kanthaTexture("#f2e3d0", "#8a3a6a"));
+  })();
+  (function () {
+    var g = part("furniture", "Indoor plants", "ঘরের গাছ", "2 pots", "Leafy pot plants in the drawing-room and dining corners.", "ড্রইং রুম আর ডাইনিংয়ের কোণে টবের গাছ।", F, { inside: true, sizeBn: "২টি টব" });
+    [[167, 318], [168, 294]].forEach(function (q) {
+      var m = addMesh(lathe([[0, 0], [4, 0], [5.4, 10], [6, 11], [0, 11]]), MI.potIn, g); m.position.set(X(q[0]), 0, Z(q[1]));
+      var r = rng(Math.round(q[0] + q[1]));
+      for (var i = 0; i < 6; i++) { var l = addMesh(new THREE.IcosahedronGeometry((3 + r() * 2.5) * IN, 1), MI.plant, g); l.position.set(X(q[0] + (r() - 0.5) * 7), Y(15 + r() * 16), Z(q[1] + (r() - 0.5) * 7)); }
+    });
+  })();
+  (function () {
+    var g = furn("Pots, cooker and jars", "হাঁড়ি, প্রেশার কুকার ও বয়াম", "on the stove and rack", "kitchen", "চুলা ও তাকে");
+    cyl(g, 188, 22, 3.8, 36.2, 44, MI.cooker); cyl(g, 188, 22, 0.8, 44, 45.5, M.black); B(g, 191.5, 21, 199, 23, 42, 43.2, M.black);
+    cyl(g, 202, 22, 4.4, 36.2, 41, MI.cooker);
+    [[58, 22], [70, 22], [82, 22], [62, 42], [76, 42], [88, 42]].forEach(function (q, i) { cyl(g, 167, q[0], 2.2, q[1], q[1] + 7, MI.jars[i % 3]); });
+    cyl(g, 231, 82, 4, 33.5, 52, MI.bucket); cyl(g, 231, 82, 4.3, 52, 53.5, MI.plate);
+  })();
+  (function () {
+    var g = furn("Plates and fruit bowl", "প্লেট ও ফলের বাটি", "6 places", "dining", "৬ জনের");
+    [[214, 229], [241, 229], [214, 257], [241, 257], [202, 243], [253, 243]].forEach(function (q) { cyl(g, q[0], q[1], 4.5, 30, 30.35, MI.plate); });
+    cyl(g, 227.5, 243, 5, 30, 32.5, MI.plate);
+    [[226, 241], [229.5, 244.5], [226.5, 246], [230, 240.5], [228, 243]].forEach(function (q, i) { ball(g, q[0], q[1], i === 4 ? 35.5 : 33.8, 1.7, MI.fruits[i % 4]); });
+  })();
+  (function () {
+    var g = part("furniture", "Bath accessories", "বাথরুমের জিনিস", "bucket, mug, towel, mirror", "A bucket and mug in every bath, towels on brass rails, and a mirror over the wash basin.", "প্রতিটি বাথরুমে বালতি ও মগ, পিতলের রেলে তোয়ালে, আর বেসিনের ওপরে আয়না।", F, { inside: true, sizeBn: "বালতি, মগ, তোয়ালে, আয়না" });
+    var bucket = lathe([[0, 0], [4.2, 0], [5.2, 11], [5.5, 11.6], [0, 11.6]], 18);
+    [[257, 50], [50, 196], [405, 196]].forEach(function (q) {
+      var m = addMesh(bucket.clone(), MI.bucket, g); m.position.set(X(q[0]), 0, Z(q[1]));
+      cyl(g, q[0] + 8, q[1], 1.8, 0, 4.2, MI.mug);
+    });
+    B(g, 248.4, 30, 249.6, 46, 44, 64, MI.towel); B(g, 248.4, 28, 250, 48, 64, 65, MI.rod);
+    B(g, 20, 183.4, 36, 184.6, 44, 64, MI.towel2); B(g, 18, 183.4, 38, 185, 64, 65, MI.rod);
+    B(g, 420, 183.4, 436, 184.6, 44, 64, MI.towel); B(g, 418, 183.4, 438, 185, 64, 65, MI.rod);
+    B(g, 295.2, 110.5, 295.6, 129.5, 38.5, 61.5, MI.frame); B(g, 294.9, 112, 295.2, 128, 40, 60, M.mirror);
+  })();
+
+  /* village trees */
+  function tree(x, z, s) {
+    var t = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * s, 0.6 * s, 9 * s, 8), M.trunk);
+    t.position.set(x, Y(-30) + 4.5 * s, z); t.castShadow = true; scene.add(t);
+    [[0, 11, 0, 4.6], [2.4, 9.6, 1.2, 3.4], [-2.2, 10, -1, 3.6], [0.6, 13, -1.4, 3]].forEach(function (b) {
+      var c = new THREE.Mesh(new THREE.IcosahedronGeometry(b[3] * s, 1), M.leaf);
+      c.position.set(x + b[0] * s, Y(-30) + b[1] * s, z + b[2] * s); c.castShadow = true; c.receiveShadow = true; scene.add(c);
+    });
+  }
+  /* ---------------- garden and yard ---------------- */
+  var yardG = new THREE.Group(); scene.add(yardG);
+  var GY = Y(-30);
+  function frondGeo(len, wid, droop) {
+    var g = new THREE.PlaneGeometry(wid, len, 2, 8), q = g.attributes.position;
+    for (var i = 0; i < q.count; i++) { var v = (q.getY(i) + len / 2) / len; q.setX(i, q.getX(i) * (1 - 0.8 * v)); q.setZ(i, droop * v * v); q.setY(i, v * len); }
+    g.computeVertexNormals(); return g;
+  }
+  function crown(parent, x, y, z, n, len, wid, droop, tilt, mat, seed) {
+    var r = rng(seed);
+    for (var i = 0; i < n; i++) {
+      var hold = new THREE.Group(); hold.position.set(x, y, z); hold.rotation.y = i * Math.PI * 2 / n + r() * 0.4;
+      var m = addMesh(frondGeo(len * (0.85 + r() * 0.3), wid, droop), mat, hold); m.rotation.x = tilt + (r() - 0.5) * 0.35;
+      parent.add(hold);
+    }
+  }
+  function palm(parent, x, z, h, lean, seed) {
+    var top = new THREE.Vector3(x + lean[0], GY + h, z + lean[1]);
+    var curve = new THREE.CatmullRomCurve3([new THREE.Vector3(x, GY, z), new THREE.Vector3(x + lean[0] * 0.15, GY + h * 0.4, z + lean[1] * 0.15), new THREE.Vector3(x + lean[0] * 0.55, GY + h * 0.75, z + lean[1] * 0.55), top]);
+    addMesh(new THREE.TubeGeometry(curve, 20, 0.42, 7, false), ME.palmTrunk, parent);
+    crown(parent, top.x, top.y, top.z, 11, 8.5, 1.3, 2.4, 1.15, ME.frond, seed);
+    for (var i = 0; i < 4; i++) { var c = addMesh(new THREE.SphereGeometry(0.38, 10, 8), ME.coconut, parent); c.position.set(top.x + Math.cos(i * 1.6) * 0.55, top.y - 0.6, top.z + Math.sin(i * 1.6) * 0.55); }
+  }
+  function banana(parent, x, z, h, seed) {
+    var st = addMesh(new THREE.CylinderGeometry(0.3, 0.42, h, 8), ME.bananaStem, parent); st.position.set(x, GY + h / 2, z);
+    crown(parent, x, GY + h, z, 7, 5.5, 1.9, 1.6, 0.55, ME.bananaLeaf, seed);
+  }
+  function betel(parent, x, z, h, seed) {
+    var t = addMesh(new THREE.CylinderGeometry(0.18, 0.24, h, 7), ME.betelTrunk, parent); t.position.set(x, GY + h / 2, z);
+    crown(parent, x, GY + h, z, 7, 5, 0.9, 1.6, 1.0, ME.frond, seed);
+  }
+  function broadleaf(parent, x, z, s, leafM, seed, fruit) {
+    var r = rng(seed), i;
+    var t = addMesh(new THREE.CylinderGeometry(0.55 * s, 0.85 * s, 8 * s, 9), M.trunk, parent); t.position.set(x, GY + 4 * s, z);
+    [[1, 0.6], [-1, 0.3], [0.2, -1]].forEach(function (b) {
+      var br = addMesh(new THREE.CylinderGeometry(0.25 * s, 0.4 * s, 5 * s, 7), M.trunk, parent);
+      br.position.set(x + b[0] * 1.2 * s, GY + 9 * s, z + b[1] * 1.2 * s); br.rotation.z = -b[0] * 0.5; br.rotation.x = b[1] * 0.5;
+    });
+    for (i = 0; i < 9; i++) {
+      var a = i / 9 * Math.PI * 2, rr = i === 0 ? 0 : 3.6 * s, c = addMesh(new THREE.IcosahedronGeometry((3 + r() * 1.8) * s, 1), leafM, parent);
+      c.position.set(x + Math.cos(a) * rr * (0.7 + r() * 0.3), GY + (11 + r() * 3 + (i === 0 ? 2.5 : 0)) * s, z + Math.sin(a) * rr * (0.7 + r() * 0.3));
+    }
+    if (fruit) for (i = 0; i < 4; i++) { var f = addMesh(new THREE.SphereGeometry(0.55 * s, 10, 8), ME.jackfruit, parent); f.scale.y = 1.5; f.position.set(x + Math.cos(i * 1.7) * 0.8 * s, GY + (3 + i * 1.2) * s, z + Math.sin(i * 1.7) * 0.8 * s); }
+  }
+  function bamboo(parent, x, z, seed) {
+    var r = rng(seed);
+    for (var i = 0; i < 16; i++) {
+      var a = r() * Math.PI * 2, d = r() * 2.2, h = 22 + r() * 10, lean = 0.08 + r() * 0.12;
+      var g = new THREE.CylinderGeometry(0.16, 0.2, h, 6); g.translate(0, h / 2, 0);
+      var m = addMesh(g, ME.bamboo, parent); m.position.set(x + Math.cos(a) * d, GY, z + Math.sin(a) * d);
+      m.rotation.z = -Math.cos(a) * lean; m.rotation.x = Math.sin(a) * lean;
+      for (var k = 0; k < 3; k++) {
+        var hh = h * (0.7 + k * 0.12), lf = addMesh(new THREE.IcosahedronGeometry(1.4 + r(), 0), ME.bambooLeaf, parent);
+        lf.position.set(x + Math.cos(a) * (d + hh * Math.sin(lean)), GY + hh * Math.cos(lean), z + Math.sin(a) * (d + hh * Math.sin(lean)));
+        lf.scale.set(1.3, 0.7, 1.3);
+      }
+    }
+  }
+
+  var gPalms = part("yard", "Coconut palms", "নারিকেল গাছ", "4 trees", "Coconut palms around the back and sides of the yard.", "উঠানের পেছনে ও পাশে নারিকেল গাছ।", yardG, { sizeBn: "৪টি গাছ" });
+  palm(gPalms, -12, -40, 30, [1.5, -2], 11); palm(gPalms, 24, -38, 28, [-2, -1.5], 12); palm(gPalms, 46, -8, 32, [2.5, 0], 13); palm(gPalms, -52, 8, 29, [-2, 1], 14);
+  var gMango = part("yard", "Mango tree", "আম গাছ", "big shade tree", "A big mango tree in the south-west corner shades the front yard in the afternoon.", "দক্ষিণ-পশ্চিম কোণে বড় আম গাছ বিকেলে সামনের উঠানে ছায়া দেয়।", yardG, { sizeBn: "বড় ছায়াদার গাছ" });
+  broadleaf(gMango, 46, 34, 1.25, ME.mangoLeaf, 21, false);
+  var gJack = part("yard", "Jackfruit tree", "কাঁঠাল গাছ", "with fruit", "Jackfruit tree in the north-east corner, with fruit hanging from the trunk.", "উত্তর-পূর্ব কোণে কাঁঠাল গাছ, কাণ্ডে কাঁঠাল ঝুলছে।", yardG, { sizeBn: "ফলসহ" });
+  broadleaf(gJack, -44, -30, 1.05, ME.jackLeaf, 22, true);
+  var gBanana = part("yard", "Banana plants", "কলা গাছ", "3 plants", "A clump of banana plants behind the house, next to the tubewell.", "বাড়ির পেছনে টিউবওয়েলের পাশে কলা গাছের ঝাড়।", yardG, { sizeBn: "৩টি গাছ" });
+  banana(gBanana, 16, -31, 5.5, 31); banana(gBanana, 19.5, -34, 4.8, 32); banana(gBanana, 13, -35, 5, 33);
+  var gBamboo = part("yard", "Bamboo clump", "বাঁশঝাড়", "16 culms", "A bamboo clump in the far north-east corner of the plot.", "জমির উত্তর-পূর্ব কোণে বাঁশঝাড়।", yardG, { sizeBn: "১৬টি বাঁশ" });
+  bamboo(gBamboo, -58, -44, 41);
+  var gBetel = part("yard", "Betel-nut palms", "সুপারি গাছ", "a row of 5", "A row of tall betel-nut palms along the south boundary.", "দক্ষিণের সীমানা বরাবর লম্বা সুপারি গাছের সারি।", yardG, { sizeBn: "৫টির সারি" });
+  [-30, -18, -6, 6, 18].forEach(function (z, i) { betel(gBetel, 56, z, 26 + (i % 2) * 3, 50 + i); });
+
+  var gPond = part("yard", "Pond", "পুকুর", "about 28' × 18'", "Village pond with lotus and lily pads in the front-left (north-west) yard. Keep it well away from the septic tank.", "উঠানের সামনে-বাঁয়ে (উত্তর-পশ্চিমে) শাপলা-পদ্মসহ পুকুর। সেপটিক ট্যাংক থেকে যথেষ্ট দূরে রাখুন।", yardG, { sizeBn: "প্রায় ২৮' × ১৮'" });
+  (function () {
+    var bank = addMesh(new THREE.RingGeometry(1, 1.16, 48), ME.bank, gPond, false); bank.rotation.x = -Math.PI / 2; bank.scale.set(14, 9, 1); bank.position.set(-42, GY + 0.025, 36);
+    var water = addMesh(new THREE.CircleGeometry(1, 48), ME.water, gPond, false); water.rotation.x = -Math.PI / 2; water.scale.set(14, 9, 1); water.position.set(-42, GY + 0.03, 36);
+    var r = rng(61);
+    for (var i = 0; i < 9; i++) {
+      var a = r() * Math.PI * 2, d = 0.25 + r() * 0.55, x = -42 + Math.cos(a) * d * 14, z = 36 + Math.sin(a) * d * 9;
+      var pad = addMesh(new THREE.CircleGeometry(0.7 + r() * 0.5, 20, 0.3, 5.9), ME.lilyPad, gPond, false); pad.rotation.x = -Math.PI / 2; pad.rotation.z = r() * 6.3; pad.position.set(x, GY + 0.06, z);
+      if (i % 3 === 0) {
+        var fl = addMesh(new THREE.ConeGeometry(0.34, 0.5, 8), ME.lotus, gPond); fl.rotation.x = Math.PI; fl.position.set(x + 0.2, GY + 0.35, z);
+        var cen = addMesh(new THREE.SphereGeometry(0.12, 8, 6), ME.pollen, gPond); cen.position.set(x + 0.2, GY + 0.62, z);
+      }
+    }
+  })();
+  var gTube = part("yard", "Tubewell", "টিউবওয়েল", "on a 5' × 5' platform", "Hand tubewell on a concrete platform in the back yard, near the kitchen. Keep it at least 30 ft from the septic tank.", "পেছনের উঠানে রান্নাঘরের কাছে পাকা প্ল্যাটফর্মে হাতকল টিউবওয়েল। সেপটিক ট্যাংক থেকে কমপক্ষে ৩০ ফুট দূরে রাখুন।", yardG, { sizeBn: "৫' × ৫' প্ল্যাটফর্মে" });
+  (function () {
+    var x = 6, z = -30;
+    addMesh(new THREE.BoxGeometry(5, 0.35, 5), ME.slab, gTube).position.set(x, GY + 0.175, z);
+    addMesh(new THREE.BoxGeometry(5.4, 0.5, 0.3), ME.slab, gTube).position.set(x, GY + 0.25, z + 2.6);
+    addMesh(new THREE.CylinderGeometry(0.13, 0.13, 2.2, 10), ME.pump, gTube).position.set(x, GY + 1.45, z);
+    addMesh(new THREE.CylinderGeometry(0.28, 0.24, 1.3, 12), ME.pump, gTube).position.set(x, GY + 3.2, z);
+    addMesh(new THREE.BoxGeometry(0.9, 0.18, 0.18), ME.pump, gTube).position.set(x + 0.55, GY + 2.9, z);
+    var handle = addMesh(new THREE.BoxGeometry(2.6, 0.12, 0.12), ME.pump, gTube); handle.position.set(x - 1.1, GY + 3.75, z); handle.rotation.z = 0.35;
+  })();
+  var gHay = part("yard", "Haystack", "খড়ের গাদা", "about 8' across", "Straw stack in the back yard for cattle feed and cooking fuel.", "গরুর খাবার আর জ্বালানির জন্য পেছনের উঠানে খড়ের গাদা।", yardG, { sizeBn: "প্রায় ৮' চওড়া" });
+  (function () {
+    var hay = new THREE.LatheGeometry([[0, 0], [5.2, 0], [5.6, 2.5], [5.2, 6], [3.8, 9], [1.8, 11.3], [0.4, 12.4], [0, 12.6]].map(function (q) { return new THREE.Vector2(q[0], q[1]); }), 18);
+    var stack = addMesh(hay, ME.straw, gHay); stack.position.set(-30, GY, -38); stack.scale.set(0.72, 0.72, 0.72);
+    addMesh(new THREE.CylinderGeometry(0.1, 0.1, 11, 6), M.trunk, gHay).position.set(-30, GY + 5.5, -38);
+  })();
+  var gPath = part("yard", "Brick path", "ইটের রাস্তা", "6' wide", "Bricks laid in a basket-weave pattern from the steps out to the yard, with a brick edging.", "সিঁড়ি থেকে উঠান পর্যন্ত ঝুড়ি-বুনন নকশায় বিছানো ইট, দুই পাশে ইটের কিনারা।", yardG, { sizeBn: "৬' চওড়া" });
+  B(gPath, 191.5, 514, 263.5, 874, -30, -29.6, ME.path, [32 * IN, 32 * IN]);
+  B(gPath, 187.5, 514, 191.5, 874, -30, -29.2, M.brick, BRICK_UV); B(gPath, 263.5, 514, 267.5, 874, -30, -29.2, M.brick, BRICK_UV);
+  var gBeds = part("yard", "Flower beds", "ফুলের বেড", "2 beds along the verandah", "Marigold, hibiscus, rose and jasmine in brick-edged beds along the verandah, and big hibiscus bushes at the front corners.", "বারান্দার সামনে ইটের কিনারা দেওয়া বেডে গাঁদা, জবা, গোলাপ ও বেলি ফুল, আর সামনের দুই কোণে বড় জবা গাছ।", yardG, { sizeBn: "বারান্দার সামনে ২টি বেড" });
+  (function () {
+    var fc = new Collector(), fr = rng(77), KIND = ["hib", "mari", "pink", "white"];
+    function shrub(x, z, rad, kind, base) {
+      var bush = new THREE.IcosahedronGeometry(rad * IN, 1); bush.scale(1, 0.8, 1); bush.translate(X(x), Y(base + rad * 0.8), Z(z)); fc.add("bush", bush);
+      for (var f = 0; f < Math.round(rad * 0.9); f++) {
+        var a = fr() * Math.PI * 2, e = fr() * 1.2, fx = x + Math.cos(a) * Math.cos(e) * rad * 0.95, fz = z + Math.sin(a) * Math.cos(e) * rad * 0.95, fy = base + rad * 0.8 + Math.sin(e) * rad * 0.8;
+        var fl = new THREE.SphereGeometry((kind === "mari" ? 1.6 : 1.9) * IN, 8, 6); fl.translate(X(fx), Y(fy), Z(fz)); fc.add(kind, fl);
+      }
+    }
+    [[12, 160], [295, 443]].forEach(function (bd) {
+      B(gBeds, bd[0], 478, bd[1], 498, -30, -28.6, ME.soil);
+      B(gBeds, bd[0] - 2, 476, bd[1] + 2, 478, -30, -27.8, M.brick, BRICK_UV); B(gBeds, bd[0] - 2, 498, bd[1] + 2, 500, -30, -27.8, M.brick, BRICK_UV);
+      B(gBeds, bd[0] - 2, 478, bd[0], 498, -30, -27.8, M.brick, BRICK_UV); B(gBeds, bd[1], 478, bd[1] + 2, 498, -30, -27.8, M.brick, BRICK_UV);
+      for (var x = bd[0] + 9; x < bd[1] - 4; x += 15) shrub(x, 488 + (fr() - 0.5) * 4, 7 + fr() * 3, KIND[Math.floor(fr() * 4)], -28.6);
+    });
+    shrub(-30, 492, 18, "hib", -30); shrub(485, 492, 18, "hib", -30);
+    fc.flush(gBeds, { bush: ME.bush, hib: ME.hib, mari: ME.mari, pink: ME.pink, white: ME.white });
+  })();
+
+  /* grass tufts and wild flowers (not clickable) */
+  (function () {
+    var blade = new THREE.ConeGeometry(0.09, 0.8, 3); blade.translate(0, 0.4, 0);
+    var tuft = (BGU && BGU.mergeBufferGeometries) ? BGU.mergeBufferGeometries([blade.clone().rotateZ(0.25).translate(0.08, 0, 0), blade.clone(), blade.clone().rotateZ(-0.3).translate(-0.08, 0, 0.05), blade.clone().rotateX(0.3).translate(0, 0, 0.1)], false) : blade;
+    var N = 2600, grass = new THREE.InstancedMesh(tuft, ME.blade, N), flow = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 6, 4), ME.blade, 420);
+    var r = rng(99), dm = new THREE.Object3D(), col = new THREE.Color(), n = 0, nf = 0, tries = 0;
+    function freeSpot() {
+      for (var k = 0; k < 20; k++) {
+        var a = r() * Math.PI * 2, d = 41 + Math.pow(r(), 0.7) * 85, x = Math.cos(a) * d, z = 2 + Math.sin(a) * d;
+        if (((x + 42) / 16) * ((x + 42) / 16) + ((z - 36) / 11) * ((z - 36) / 11) < 1) continue;
+        if (Math.abs(x) < 4.5 && z > 18 && z < 56) continue;
+        return [x, z];
+      }
+      return null;
+    }
+    while (n < N && tries < N * 2) {
+      tries++;
+      var sp = freeSpot(); if (!sp) continue;
+      dm.position.set(sp[0], GY, sp[1]); dm.rotation.set(0, r() * 6.28, 0);
+      var sc = 0.7 + r() * 0.9; dm.scale.set(sc, sc * (0.8 + r() * 0.6), sc); dm.updateMatrix();
+      grass.setMatrixAt(n, dm.matrix); col.setHSL(0.22 + r() * 0.06, 0.45 + r() * 0.2, 0.26 + r() * 0.12); grass.setColorAt(n, col); n++;
+    }
+    var FC = [0xf2d04a, 0xffffff, 0xb58ad6, 0xf29a3a];
+    while (nf < 420) {
+      var fp = freeSpot(); if (!fp) break;
+      dm.position.set(fp[0], GY + 0.45, fp[1]); dm.rotation.set(0, 0, 0); dm.scale.set(1, 1, 1); dm.updateMatrix();
+      flow.setMatrixAt(nf, dm.matrix); col.setHex(FC[nf % 4]); flow.setColorAt(nf, col); nf++;
+    }
+    grass.count = n; flow.count = nf;
+    grass.receiveShadow = true; flow.receiveShadow = true;
+    scene.add(grass); scene.add(flow);
+  })();
+
+  /* sky dome, clouds and the moving sun */
+  var skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false,
+    uniforms: { top: { value: new THREE.Color(0.5, 0.7, 0.87) }, bottom: { value: new THREE.Color(0.91, 0.94, 0.92) }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: new THREE.Color(1, 0.93, 0.78) } },
+    vertexShader: "varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vD; void main(){ float h = clamp(vD.y, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.55)); float s = max(dot(normalize(vD), normalize(sunDir)), 0.0); c += sunCol * (pow(s, 900.0) * 1.8 + pow(s, 16.0) * 0.22); gl_FragColor = vec4(c, 1.0); }"
+  });
+  var skyDome = new THREE.Mesh(new THREE.SphereGeometry(420, 32, 16), skyMat); skyDome.renderOrder = -1; scene.add(skyDome);
+  (function () {
+    var r = rng(5);
+    for (var i = 0; i < 7; i++) {
+      var a = r() * Math.PI * 2, d = 170 + r() * 110, cx = Math.cos(a) * d, cz = Math.sin(a) * d, cy = 70 + r() * 45;
+      for (var k = 0; k < 6; k++) { var c = addMesh(new THREE.IcosahedronGeometry(9 + r() * 8, 1), ME.cloud, scene, false); c.receiveShadow = false; c.position.set(cx + (k - 2.5) * 9 + r() * 5, cy + r() * 5, cz + r() * 8); c.scale.y = 0.55; }
+    }
+  })();
+  var LAT = 24 * Math.PI / 180, sunState = { t: 15.5 };
+  function updateSun(t) {
+    sunState.t = t;
+    var h = (t - 12) * 15 * Math.PI / 180;
+    var dir = new THREE.Vector3(Math.sin(LAT) * Math.cos(h), Math.cos(LAT) * Math.cos(h), Math.sin(h)).normalize();
+    var el = Math.max(Math.asin(Math.max(dir.y, 0)), 0.03), warm = 1 - Math.min(1, el / 0.6);
+    if (dir.y < 0.03) { dir.y = 0.03; dir.normalize(); }
+    sun.position.copy(dir).multiplyScalar(90);
+    sun.color.setRGB(1, 0.95 - 0.25 * warm, 0.86 - 0.45 * warm);
+    sun.intensity = 0.25 + 0.8 * Math.min(1, Math.sin(el) * 1.6);
+    hemi.intensity = 0.35 + 0.3 * Math.min(1, Math.sin(el) * 2);
+    skyMat.uniforms.sunDir.value.copy(dir);
+    skyMat.uniforms.top.value.setRGB(0.5 - 0.1 * warm, 0.7 - 0.18 * warm, 0.87 - 0.22 * warm);
+    skyMat.uniforms.bottom.value.setRGB(0.91 + 0.07 * warm, 0.94 - 0.1 * warm, 0.92 - 0.26 * warm);
+    scene.fog.color.copy(skyMat.uniforms.bottom.value).convertSRGBToLinear();
+    M.lamp.emissiveIntensity = t >= 17.25 ? 2.2 : 0.9;
+    timeLabel();
+  }
+  function timeLabel() {
+    var t = sunState.t, hh = Math.floor(t), mm = Math.round((t - hh) * 60), h12 = ((hh + 11) % 12) + 1, mmT = (mm < 10 ? "0" : "") + mm;
+    var part_ = t < 12 ? "সকাল" : t < 15 ? "দুপুর" : t < 17.75 ? "বিকেল" : "সন্ধ্যা";
+    $("t-time").textContent = T(h12 + ":" + mmT + " " + (hh >= 12 ? "PM" : "AM"), part_ + " " + bnNum(h12 + ":" + mmT));
+  }
+  function cutLabel() { $("t-cuth").textContent = lang === "bn" ? bnNum(CUT_FT) + " ফুট" : CUT_FT + " ft"; }
+
+
+  /* collect pickable meshes */
+  var pickables = [];
+  parts.forEach(function (p) { p.group.traverse(function (o) { if (o.isMesh) { o.userData.part = p; pickables.push(o); } }); });
+
+  /* ---------------- labels ---------------- */
+  var labelsEl = document.getElementById("labels"), labels = [];
+  function addLabel(pos, cls, fn) {
+    var el = document.createElement("div"); el.className = "l3" + (cls ? " " + cls : "");
+    labelsEl.appendChild(el);
+    var L = { el: el, pos: pos, fn: fn, room: cls !== "dir" }; labels.push(L); return L;
+  }
+  ROOMS.forEach(function (rm) {
+    var r = rm.r[0], cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2, h = rm.k === "verandah" ? 20 : 54;
+    addLabel(new THREE.Vector3(X(cx), Y(h), Z(cz)), "", function () {
+      return T(rm.en, rm.bn) + "<small>" + (lang === "bn" ? bnNum(rm.sz) : rm.sz) + "</small>";
+    });
+  });
+  var dirText = [], DIRS = { n: ["NORTH", "উত্তর"], s: ["SOUTH", "দক্ষিণ"], e: ["EAST · BACK", "পূর্ব · পিছন"], w: ["WEST · FRONT", "পশ্চিম · সামনে"] };
+  function groundText(key, x, z, rotY) {
+    var c = canvas(512, 96), tex = toTex(c);
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(13, 13 * 96 / 512), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2;
+    var g = new THREE.Group(); g.add(m); g.position.set(x, Y(-30) + 0.03, z); g.rotation.y = rotY; scene.add(g);
+    dirText.push({ key: key, c: c, tex: tex });
+  }
+  groundText("n", -30, 0, -Math.PI / 2); groundText("s", 30, 0, Math.PI / 2); groundText("e", 0, -30, Math.PI); groundText("w", 0, 31, 0);
+  function drawDirs() {
+    dirText.forEach(function (d) {
+      var g = d.c.getContext("2d");
+      g.clearRect(0, 0, 512, 96);
+      g.fillStyle = "rgba(38,52,48,.88)"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.font = lang === "bn" ? '600 54px "Hind Siliguri", sans-serif' : '600 58px "Barlow Condensed", sans-serif';
+      g.fillText(T(DIRS[d.key][0], DIRS[d.key][1]), 256, 50);
+      d.tex.needsUpdate = true;
+    });
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawDirs);
+
+  /* ---------------- state and UI ---------------- */
+  var state = { roof: true, cut: false, doors: false, furn: true, labels: true };
+  var $ = function (id) { return document.getElementById(id); };
+  function apply() {
+    groups.roof.visible = state.roof;
+    groups.furniture.visible = state.furn;
+    clipArr.length = 0; if (state.cut) clipArr.push(cutPlane);
+    $("tg-roof").checked = state.roof; $("tg-cut").checked = state.cut; $("tg-doors").checked = state.doors;
+    $("tg-furn").checked = state.furn; $("tg-labels").checked = state.labels;
+    if (selHelper) refreshHelper();
+  }
+  $("tg-roof").addEventListener("change", function (e) { state.roof = e.target.checked; apply(); });
+  $("tg-cut").addEventListener("change", function (e) { state.cut = e.target.checked; apply(); });
+  $("tg-doors").addEventListener("change", function (e) { state.doors = e.target.checked; apply(); });
+  $("tg-furn").addEventListener("change", function (e) { state.furn = e.target.checked; apply(); });
+  $("tg-labels").addEventListener("change", function (e) { state.labels = e.target.checked; apply(); });
+  $("sun-t").addEventListener("input", function (e) { updateSun(parseFloat(e.target.value)); });
+  $("cut-h").addEventListener("input", function (e) { CUT_FT = parseFloat(e.target.value); cutPlane.constant = CUT_FT; state.cut = true; apply(); cutLabel(); });
+
+  /* camera moves */
+  var anim = null;
+  function flyTo(pos, target, ms) {
+    anim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos, t1: target, start: performance.now(), ms: ms || 750 };
+  }
+  var VIEWS = {
+    iso: [[-36, 17, 58], [0, 4, 0]], front: [[0, 9, 60], [0, 4, 0]], back: [[0, 9, -60], [0, 4, 0]],
+    north: [[-60, 9, 0], [0, 4, 0]], south: [[60, 9, 0], [0, 4, 0]], top: [[0, 78, 0.01], [0, 0, 0]],
+    inside: [[-30, 44, 36], [0, 0, 1]]
+  };
+  Array.prototype.forEach.call(document.querySelectorAll(".vbtn"), function (b) {
+    b.addEventListener("click", function () {
+      var v = b.getAttribute("data-view");
+      if (v === "inside") { state.roof = false; state.cut = true; state.labels = true; apply(); }
+      flyTo(new THREE.Vector3().fromArray(VIEWS[v][0]), new THREE.Vector3().fromArray(VIEWS[v][1]));
+    });
+  });
+
+  /* selection */
+  var selected = null, selHelper = null;
+  function partBox(p) {
+    var box = new THREE.Box3();
+    if (p.room && p.room.k !== "verandah") {
+      p.room.r.forEach(function (r) {
+        box.expandByPoint(new THREE.Vector3(X(r[0]), 0, Z(r[1])));
+        box.expandByPoint(new THREE.Vector3(X(r[2]), state.cut ? CUT_FT : Y(WALL_H), Z(r[3])));
+      });
+      return box;
+    }
+    return box.setFromObject(p.group);
+  }
+  function refreshHelper() {
+    if (selHelper) { scene.remove(selHelper); selHelper = null; }
+    if (!selected) return;
+    selHelper = new THREE.Box3Helper(partBox(selected), 0xe3a33a);
+    selHelper.material.depthTest = false; selHelper.material.transparent = true; selHelper.renderOrder = 10;
+    scene.add(selHelper);
+  }
+  var CAT = { room: ["Room", "ঘর"], door: ["Door", "দরজা"], window: ["Window", "জানালা"], furniture: ["Furniture", "আসবাব"], structure: ["Structure", "কাঠামো"], roof: ["Roof", "ছাদ"], yard: ["Garden and yard", "উঠান ও বাগান"] };
+  function sizeText(p) {
+    if (lang !== "bn") return p.size + (p.room ? " · " + p.room.area + " sq ft" : "");
+    if (p.sizeBn) return p.sizeBn;
+    return bnNum(p.size) + (p.room ? " · " + bnNum(p.room.area) + " বর্গফুট" : "");
+  }
+  function renderCard() {
+    var c = $("card");
+    if (!selected) { c.innerHTML = '<p class="empty">' + T("Click any part of the model, or pick one from the list below.", "মডেলের যেকোনো অংশে ক্লিক করুন, বা নিচের তালিকা থেকে বেছে নিন।") + "</p>"; return; }
+    var p = selected, info = T(p.infoEn, p.infoBn);
+    c.innerHTML = '<div class="cat">' + T(CAT[p.cat][0], CAT[p.cat][1]) + "</div><h3>" + T(p.en, p.bn) + '</h3><div class="sz">' + sizeText(p) + "</div>" + (info ? "<p>" + info + "</p>" : "");
+  }
+  function select(p, focus) {
+    selected = p;
+    if (p && focus && p.inside && state.roof && !state.cut) { state.roof = false; state.cut = true; apply(); }
+    refreshHelper(); renderCard();
+    Array.prototype.forEach.call(document.querySelectorAll(".part"), function (b) { b.setAttribute("aria-current", b._part === p ? "true" : "false"); });
+    if (p && focus) {
+      var box = partBox(p), c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()).length();
+      var dir = camera.position.clone().sub(controls.target).normalize();
+      if (dir.y < 0.45) { dir.y = 0.45; dir.normalize(); }
+      var dist = Math.min(Math.max(size * 1.7, 11), 95);
+      flyTo(c.clone().add(dir.multiplyScalar(dist)), c);
+    }
+  }
+
+  /* parts list */
+  var LISTS = [["room", "Rooms", "ঘর"], ["door", "Doors", "দরজা"], ["window", "Windows and vents", "জানালা ও ভেন্টিলেটর"], ["furniture", "Furniture and decoration", "আসবাব ও সাজসজ্জা"], ["structure", "Structure", "কাঠামো"], ["roof", "Roof", "ছাদ"], ["yard", "Garden and yard", "উঠান ও বাগান"]];
+  function renderParts() {
+    var host = $("parts"), open = {};
+    Array.prototype.forEach.call(host.querySelectorAll("details"), function (d) { open[d.dataset.cat] = d.open; });
+    host.innerHTML = "";
+    LISTS.forEach(function (L, i) {
+      var items = parts.filter(function (p) { return p.cat === L[0]; });
+      var d = document.createElement("details"); d.dataset.cat = L[0];
+      d.open = L[0] in open ? open[L[0]] : i === 0;
+      var s = document.createElement("summary");
+      s.innerHTML = '<span class="grow">' + T(L[1], L[2]) + '</span><span class="n">' + (lang === "bn" ? bnNum(items.length) : items.length) + "</span>";
+      d.appendChild(s);
+      var list = document.createElement("div"); list.className = "plist";
+      items.forEach(function (p) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "part"; b._part = p;
+        b.setAttribute("aria-current", p === selected ? "true" : "false");
+        var ps = lang === "bn" ? (p.sizeBn || bnNum(p.size)) : p.size;
+        b.innerHTML = "<span>" + T(p.en, p.bn) + '</span><span class="ps">' + ps + "</span>";
+        b.addEventListener("click", function () { select(p, true); });
+        list.appendChild(b);
+      });
+      d.appendChild(list); host.appendChild(d);
+    });
+  }
+
+  /* language */
+  var UI = {
+    "t-title": ["Four-room one-storey house", "চার রুমের একতলা বাড়ি"],
+    "t-sub": ["3D model · red brick · front faces west", "৩ডি মডেল · লাল ইট · সামনে পশ্চিম দিক"],
+    "v-iso": ["3D", "৩ডি"], "v-front": ["Front", "সামনে"], "v-back": ["Back", "পেছনে"], "v-north": ["North", "উত্তর"],
+    "v-south": ["South", "দক্ষিণ"], "v-top": ["Top", "ওপর থেকে"], "v-inside": ["See inside", "ভেতরে দেখুন"],
+    "t-hint": ["Drag to rotate · scroll or pinch to zoom · right-drag or two fingers to move · click any part", "ঘোরাতে টানুন · জুম করতে স্ক্রল বা দুই আঙুল · সরাতে ডান-ক্লিক করে টানুন · যেকোনো অংশে ক্লিক করুন"],
+    "t-show": ["Show", "দেখান"], "t-roof": ["Roof and parapet", "ছাদ ও রেলিং দেয়াল"], "t-cut": ["Cut the walls to look inside", "দেয়াল কেটে ভেতরে দেখুন"],
+    "t-sun": ["Sunlight · time of day", "সূর্যের আলো · দিনের সময়"],
+    "t-sunnote": ["Slide from morning (sun in the east, behind the house) to evening (sun on the front verandah).", "সকাল (পূর্বে, বাড়ির পেছনে সূর্য) থেকে সন্ধ্যা (সামনের বারান্দায় রোদ) পর্যন্ত টেনে দেখুন।"],
+    "t-doors": ["Open all doors and the gate", "সব দরজা ও গেট খুলুন"], "t-furn": ["Furniture", "আসবাব"], "t-labels": ["Room names", "ঘরের নাম"],
+    "t-sel": ["Selected part", "নির্বাচিত অংশ"], "t-parts": ["Every part", "সব অংশ"], "t-designed": ["Designed by", "নকশা করেছেন"],
+    "t-name": ["Md. Khalid Hasan Milu", "মোঃ খালিদ হাসান মিলু"],
+    "t-aff": ["Department of Agroforestry and Environment, Gazipur Agricultural University, Gazipur-1706, Bangladesh", "কৃষিবনায়ন ও পরিবেশ বিভাগ, গাজীপুর কৃষি বিশ্ববিদ্যালয়, গাজীপুর-১৭০৬, বাংলাদেশ"]
+  };
+  function setLang(l) {
+    lang = l;
+    document.body.classList.toggle("bn", l === "bn");
+    document.documentElement.lang = l;
+    $("lang-en").setAttribute("aria-pressed", l === "en"); $("lang-bn").setAttribute("aria-pressed", l === "bn");
+    Object.keys(UI).forEach(function (id) { var el = $(id); if (el) el.textContent = UI[id][l === "bn" ? 1 : 0]; });
+    labels.forEach(function (L) { L.el.innerHTML = L.fn(); });
+    drawDirs(); timeLabel(); cutLabel();
+    renderParts(); renderCard();
+    try { localStorage.setItem("house3d-lang", l); } catch (e) {}
+  }
+  $("lang-en").addEventListener("click", function () { setLang("en"); });
+  $("lang-bn").addEventListener("click", function () { setLang("bn"); });
+
+  /* picking */
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), tip = $("tip");
+  function shown(o) { while (o) { if (!o.visible) return false; o = o.parent; } return true; }
+  function pick(ev) {
+    var rect = renderer.domElement.getBoundingClientRect();
+    ndc.set(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var hits = ray.intersectObjects(pickables, false);
+    for (var i = 0; i < hits.length; i++) {
+      var h = hits[i];
+      if (state.cut && h.point.y > CUT_FT + 0.01) continue;
+      if (!shown(h.object)) continue;
+      return h.object.userData.part;
+    }
+    return null;
+  }
+  var down = null;
+  renderer.domElement.addEventListener("pointerdown", function (e) { down = { x: e.clientX, y: e.clientY }; });
+  renderer.domElement.addEventListener("pointerup", function (e) {
+    if (!down || Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 5) { down = null; return; }
+    down = null;
+    select(pick(e), false);
+  });
+  var hoverEv = null;
+  renderer.domElement.addEventListener("pointermove", function (e) { if (e.pointerType === "mouse") hoverEv = e; });
+  renderer.domElement.addEventListener("pointerleave", function () { hoverEv = null; tip.hidden = true; });
+  renderer.domElement.addEventListener("dblclick", function (e) { var p = pick(e); if (p) select(p, true); });
+
+  /* resize */
+  function resize() {
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener("resize", resize);
+  resize();
+
+  /* loop */
+  var v = new THREE.Vector3(), reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (anim) {
+      var t = Math.min(1, (now - anim.start) / (reduce ? 1 : anim.ms)), k = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      camera.position.lerpVectors(anim.p0, anim.p1, k); controls.target.lerpVectors(anim.t0, anim.t1, k);
+      if (t >= 1) anim = null;
+    }
+    controls.update();
+    skyDome.position.copy(camera.position);
+    if (!reduce) fans.forEach(function (f) { f.rotation.y += 0.09; });
+    doorPivots.forEach(function (p) {
+      var target = state.doors ? p.userData.openA : p.userData.closedA;
+      p.rotation.y += (target - p.rotation.y) * (reduce ? 1 : 0.12);
+    });
+    renderer.render(scene, camera);
+    var w = stage.clientWidth, h = stage.clientHeight, showRooms = state.labels && (!state.roof || state.cut);
+    labels.forEach(function (L) {
+      var vis = L.room ? showRooms : true;
+      if (vis) {
+        v.copy(L.pos); if (L.room && state.cut) v.y = Math.min(v.y, CUT_FT + 0.4);
+        v.project(camera);
+        vis = v.z < 1 && v.x > -1.1 && v.x < 1.1 && v.y > -1.1 && v.y < 1.1;
+        if (vis) L.el.style.transform = "translate(" + ((v.x * 0.5 + 0.5) * w).toFixed(1) + "px," + ((-v.y * 0.5 + 0.5) * h).toFixed(1) + "px) translate(-50%,-50%)";
+      }
+      L.el.hidden = !vis;
+    });
+    if (hoverEv) {
+      var p = pick(hoverEv), rect = stage.getBoundingClientRect();
+      if (p) {
+        tip.innerHTML = T(p.en, p.bn) + "<small>" + sizeText(p) + "</small>";
+        tip.style.transform = "translate(" + (hoverEv.clientX - rect.left + 14) + "px," + (hoverEv.clientY - rect.top + 14) + "px)";
+        tip.hidden = false;
+      } else tip.hidden = true;
+      hoverEv = null;
+    }
+  }
+
+  var saved = "en";
+  try { saved = localStorage.getItem("house3d-lang") || "en"; } catch (e) {}
+  updateSun(15.5);
+  setLang(saved === "bn" ? "bn" : "en");
+  apply();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

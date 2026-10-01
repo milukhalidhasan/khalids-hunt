@@ -1,0 +1,2726 @@
+<title>Khalid's Treasure Hunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;600;700;800&family=Hind+Siliguri:wght@500;600&display=swap">
+<style>
+:root{--ink:#2a1e16;--cream:#fff6e6;--brick:#a5432a;--gold:#e3a33a;--soft:#f3e2c4;--muted:#7a5a44;
+  --f:"Baloo Da 2","Hind Siliguri","Segoe UI",Arial,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:#dce9ee;color:var(--ink);font:500 16px/1.4 var(--f);overflow:hidden}
+#game{position:relative;height:100%;overflow:hidden;-webkit-user-select:none;user-select:none}
+#stage{position:absolute;inset:0;touch-action:none;background:#dce9ee}
+#stage canvas{display:block;width:100%;height:100%;outline:none}
+#loading{position:absolute;inset:0;display:grid;place-items:center;font-size:1.1rem}
+.hud{position:absolute;inset:0;pointer-events:none;padding-block:12px;padding-inline:16px}
+.hud-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start}
+.pill{pointer-events:auto;background:var(--cream);border:2.5px solid var(--ink);border-radius:14px;padding:5px 14px 6px;box-shadow:0 3px 0 var(--ink);font-variant-numeric:tabular-nums;min-width:88px}
+.lbl{display:block;font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);line-height:1.1}
+.pill b{display:block;font-size:1.55rem;line-height:1.05;font-weight:800}
+.meta{text-align:right}
+.task{justify-self:center;display:flex;align-items:center;gap:12px;background:var(--cream);border:2.5px solid var(--ink);border-radius:18px;padding:6px 18px 6px 8px;box-shadow:0 4px 0 var(--ink);max-width:560px;min-width:0}
+.task img{width:66px;height:66px;border-radius:12px;background:var(--soft);flex:none;border:2px solid var(--ink)}
+.task .lbl{color:var(--brick)}
+.task b{display:block;font-size:1.5rem;line-height:1.1;font-weight:800;overflow-wrap:anywhere}
+.task small{display:block;font-size:.95rem;color:#6b4a36;min-height:1.3em}
+.btns{position:absolute;right:16px;top:104px;display:grid;gap:9px;pointer-events:auto}
+.rbtn{width:52px;height:52px;border-radius:50%;border:2.5px solid var(--ink);background:var(--cream);box-shadow:0 3px 0 var(--ink);display:grid;place-items:center;cursor:pointer;color:var(--ink);font:800 .9rem/1 var(--f);padding:0}
+.rbtn svg{width:24px;height:24px}
+.rbtn.hint{background:var(--gold)}
+.rbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+#toast{position:absolute;left:50%;top:124px;transform:translateX(-50%);background:var(--ink);color:var(--cream);padding:8px 18px;border-radius:12px;font-size:1.08rem;font-weight:600;max-width:min(90vw,540px);text-align:center;opacity:0;transition:opacity .25s}
+#toast.on{opacity:1}
+.keys{position:absolute;left:16px;right:16px;bottom:14px;font-size:.9rem;font-weight:600;color:#23332f;text-shadow:0 1px 0 rgba(255,255,255,.85)}
+#joy{position:absolute;left:22px;bottom:26px;width:136px;height:136px;border-radius:50%;background:rgba(255,246,230,.55);border:2.5px solid rgba(42,30,22,.6);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:var(--brick);border:2.5px solid var(--ink)}
+.pop{position:absolute;left:0;top:0;font:800 2rem/1 var(--f);color:var(--gold);-webkit-text-stroke:2px var(--ink);pointer-events:none;animation:pop 1.2s ease-out forwards}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.12)}100%{opacity:0;transform:translate(-50%,-240%) scale(1)}}
+@media (prefers-reduced-motion:reduce){.pop{animation-duration:.01s}}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:16px;background:rgba(42,30,22,.32);pointer-events:auto}
+.card{background:var(--cream);border:3px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink);padding:22px 24px 20px;max-width:540px;width:100%;max-height:100%;overflow:auto;text-align:center}
+.card h1{margin:0;font:800 clamp(1.9rem,6vw,2.8rem)/1.08 var(--f);color:var(--brick);text-wrap:balance}
+.card p{margin:10px 0 0;font-size:1.04rem;line-height:1.45}
+.card .ctl{font-size:.93rem;color:#6b4a36}
+.big{margin-top:16px;font:800 1.3rem/1 var(--f);padding:14px 30px;border-radius:16px;border:3px solid var(--ink);background:var(--gold);color:var(--ink);box-shadow:0 4px 0 var(--ink);cursor:pointer}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.chip{border:2px solid var(--ink);border-radius:999px;padding:5px 16px;background:#fff;font:700 .98rem var(--f);cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--cream)}
+.stars{font-size:2.6rem;letter-spacing:.18em;color:var(--gold);-webkit-text-stroke:1.5px var(--ink);margin-top:4px;line-height:1.2}
+.stars .off{color:#e8dcc8}
+.found-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.found-list figure{margin:0;display:grid;justify-items:center;gap:2px;font-size:.8rem;font-weight:700;color:#6b4a36;width:62px}
+.found-list img{width:46px;height:46px;border-radius:10px;background:var(--soft);border:2px solid var(--ink)}
+.credit{margin-top:16px;font-size:.82rem;color:var(--muted)}
+button:focus-visible{outline:3px solid var(--brick);outline-offset:3px}
+.rbtn,.big,.chip,#joy{touch-action:manipulation}
+.bubble{position:absolute;left:0;top:0;transform:translate(-50%,-100%);background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:16px;padding:3px 14px 5px;font:800 1.25rem/1.2 var(--f);box-shadow:0 3px 0 var(--ink);white-space:nowrap;pointer-events:none}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-11px;margin-left:-9px;border-style:solid;border-width:10px 9px 0;border-color:var(--ink) transparent transparent}
+.bubble.show{animation:bub .35s ease-out}
+@keyframes bub{0%{transform:translate(-50%,-100%) scale(.4)}70%{transform:translate(-50%,-100%) scale(1.12)}100%{transform:translate(-50%,-100%) scale(1)}}
+@media (prefers-reduced-motion:reduce){.bubble.show{animation:none}}
+@media (max-width:720px) and (orientation:portrait){
+  .hud-top{grid-template-columns:1fr 1fr}
+  .task{grid-column:1/-1;grid-row:1;justify-self:stretch}
+  .pill b{font-size:1.2rem}.task b{font-size:1.15rem}.task img{width:48px;height:48px}
+  .btns{top:auto;bottom:28px;right:18px;grid-template-columns:repeat(2,52px)}
+  .keys{display:none}
+  #toast{top:168px}
+}
+/* phones held sideways */
+@media (max-height:520px) and (orientation:landscape){
+  .hud{padding-block:8px;padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
+  .pill{padding:3px 10px 4px;min-width:70px;border-radius:12px}
+  .pill b{font-size:1.15rem}
+  .lbl{font-size:.66rem}
+  .task{padding:4px 12px 4px 6px;gap:8px;border-radius:14px}
+  .task img{width:44px;height:44px;border-radius:9px}
+  .task b{font-size:1.1rem}
+  .task small{font-size:.8rem;min-height:0}
+  .btns{top:auto;bottom:16px;right:max(16px,env(safe-area-inset-right));grid-template-columns:repeat(2,50px);gap:8px}
+  .rbtn{width:50px;height:50px}
+  #toast{top:72px;font-size:.95rem}
+  #joy{left:max(24px,env(safe-area-inset-left));bottom:18px;width:150px;height:150px}
+  #knob{width:62px;height:62px;margin:-31px 0 0 -31px}
+  .keys{display:none}
+  .card{padding:14px 18px;border-radius:18px}
+  .card h1{font-size:1.7rem}
+  .card p{font-size:.92rem;margin-top:6px}
+  .big{margin-top:10px;padding:10px 24px;font-size:1.1rem}
+  .row{margin-top:8px}
+  .stars{font-size:2rem}
+  .bubble{font-size:1.05rem}
+}
+</style>
+<div id="game">
+  <div id="stage" aria-label="Game view"><div id="loading">Loading the house…</div></div>
+
+  <div class="hud" id="hud" hidden>
+    <div class="hud-top">
+      <div class="pill"><span class="lbl" id="l-score">Score</span><b id="h-score">0</b></div>
+      <div class="task" role="status" aria-live="polite"><img id="task-img" alt=""><div><span class="lbl" id="l-find">Find</span><b id="task-name"></b><small id="task-hint"></small></div></div>
+      <div class="pill meta"><span class="lbl" id="l-item">Item</span><b id="h-count">1 / 8</b><span class="lbl" id="h-time">0:00</span></div>
+    </div>
+    <div class="btns">
+      <button type="button" class="rbtn hint" id="b-hint" aria-label="Hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
+      <button type="button" class="rbtn" id="b-sound" aria-label="Sound on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="snd-on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="snd-off" d="M17 9l5 6M22 9l-5 6" style="display:none"/></svg></button>
+      <button type="button" class="rbtn" id="b-lang" aria-label="Language">বাং</button>
+      <button type="button" class="rbtn" id="b-pause" aria-label="Pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+      <button type="button" class="rbtn" id="b-full" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+    <div class="bubble" id="bubble" hidden></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="joy" hidden><div id="knob"></div></div>
+    <div class="keys" id="keys"></div>
+  </div>
+
+  <div class="overlay" id="menu">
+    <div class="card">
+      <h1 id="m-title">Khalid's Treasure Hunt</h1>
+      <p id="m-story"></p>
+      <p class="ctl" id="m-score"></p>
+      <p class="ctl" id="m-ctl"></p>
+      <div class="row"><button type="button" class="chip" id="m-en" aria-pressed="true">English</button><button type="button" class="chip" id="m-bn" aria-pressed="false">বাংলা</button></div>
+      <button type="button" class="big" id="m-start">Start the hunt</button>
+      <p class="ctl" id="m-best"></p>
+      <p class="credit" id="m-credit"></p>
+    </div>
+  </div>
+
+  <div class="overlay" id="pause" hidden>
+    <div class="card">
+      <h1 id="p-title">Paused</h1>
+      <button type="button" class="big" id="p-resume">Resume</button>
+      <div class="row"><button type="button" class="chip" id="p-restart">Start over</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="done" hidden>
+    <div class="card">
+      <h1 id="d-title"></h1>
+      <div class="stars" id="d-stars" aria-hidden="true"></div>
+      <p id="d-score"></p>
+      <p class="ctl" id="d-text"></p>
+      <div class="found-list" id="d-list"></div>
+      <button type="button" class="big" id="d-again"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script>
+if (!window.THREE) document.getElementById("loading").textContent = "Could not load the 3D engine. Check the internet and reload. · ৩ডি ইঞ্জিন লোড হয়নি। ইন্টারনেট দেখে আবার খুলুন।";
+</script>
+<script>
+(function () {
+  "use strict";
+  var stage = document.getElementById("stage");
+  if (!window.THREE || !THREE.OrbitControls) {
+    document.getElementById("loading").textContent = "The 3D library could not load. Check the internet connection and reload the page.";
+    return;
+  }
+
+  /* ---------------- plan data, in inches (same numbers as the floor plan) ---------------- */
+  var IN = 1 / 12, W = 455, D = 426, VER = 48, WALL_H = 120, CUT_FT = 5;
+  var OX = W / 2, OZ = (D + VER) / 2;
+  function X(x) { return (x - OX) * IN; }
+  function Z(z) { return (z - OZ) * IN; }
+  function Y(y) { return y * IN; }
+  var BN_D = "০১২৩৪৫৬৭৮৯";
+  function bnNum(s) { return String(s).replace(/[0-9]/g, function (d) { return BN_D[+d]; }); }
+
+  var lang = "en";
+  function T(en, bn) { return lang === "bn" ? bn : en; }
+
+  // plan: top edge = east (back), bottom = west (front, verandah), left = north, right = south
+  var ROOMS = [
+    { k: "bed1", en: "Bedroom 1", bn: "শোবার ঘর ১", r: [[10, 10, 154, 178]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "North-east corner. 6' × 7' bed, almirah and dressing table. Outside door D4 in the north wall. Uses the common bath.",
+      nBn: "উত্তর-পূর্ব কোণ। ৬' × ৭' খাট, আলমারি ও ড্রেসিং টেবিল। উত্তরের দেয়ালে বাইরের দরজা D4। কমন বাথরুম ব্যবহার করবে।" },
+    { k: "bed2", en: "Bedroom 2", bn: "শোবার ঘর ২", r: [[301, 10, 445, 178]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "South-east corner, the coolest room: south breeze and morning sun. Uses the common bath.",
+      nBn: "দক্ষিণ-পূর্ব কোণ, সবচেয়ে ঠান্ডা ঘর: দক্ষিণের বাতাস আর সকালের রোদ। কমন বাথরুম ব্যবহার করবে।" },
+    { k: "bed3", en: "Bedroom 3", bn: "শোবার ঘর ৩", r: [[10, 248, 154, 416]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "North-west corner. 5' × 7' bed, almirah and study table. Own attached bath, and an outside door D4 in the north wall.",
+      nBn: "উত্তর-পশ্চিম কোণ। ৫' × ৭' খাট, আলমারি ও পড়ার টেবিল। নিজস্ব এটাচড বাথ, আর উত্তরের দেয়ালে বাইরের দরজা D4।" },
+    { k: "bed4", en: "Bedroom 4", bn: "শোবার ঘর ৪", r: [[301, 248, 445, 416]], sz: "12' × 14'", area: "168", fl: "room",
+      nEn: "South-west corner. 5' × 7' bed, almirah and study table. Own attached bath.",
+      nBn: "দক্ষিণ-পশ্চিম কোণ। ৫' × ৭' খাট, আলমারি ও পড়ার টেবিল। নিজস্ব এটাচড বাথ।" },
+    { k: "kitchen", en: "Kitchen", bn: "রান্নাঘর", r: [[159, 10, 243, 130]], sz: "7' × 10'", area: "70", fl: "wet",
+      nEn: "L-shaped counter 2'-8\" high, 2-burner stove under the east window with an exhaust fan, sink, fridge and rack.",
+      nBn: "২'-৮\" উঁচু L-আকারের কাউন্টার, পূর্বের জানালার নিচে ২ চুলার স্টোভ ও এগজস্ট ফ্যান, সিংক, ফ্রিজ ও তাক।" },
+    { k: "bathC", en: "Common bath", bn: "কমন বাথরুম", r: [[248, 10, 296, 94]], sz: "4' × 7'", area: "28", fl: "wet",
+      nEn: "Shared by Bedrooms 1 and 2. Toilet set north–south, shower corner and floor drain.",
+      nBn: "শোবার ঘর ১ ও ২ ব্যবহার করবে। উত্তর-দক্ষিণ বরাবর টয়লেট, শাওয়ার ও ফ্লোর ড্রেন।" },
+    { k: "bathL", en: "Attached bath · Bedroom 3", bn: "এটাচড বাথ · শোবার ঘর ৩", r: [[10, 183, 94, 243]], sz: "7' × 5'", area: "35", fl: "wet",
+      nEn: "Door from Bedroom 3. Toilet set north–south, shower and floor drain.",
+      nBn: "শোবার ঘর ৩ থেকে দরজা। উত্তর-দক্ষিণ বরাবর টয়লেট, শাওয়ার ও ফ্লোর ড্রেন।" },
+    { k: "bathR", en: "Attached bath · Bedroom 4", bn: "এটাচড বাথ · শোবার ঘর ৪", r: [[361, 183, 445, 243]], sz: "7' × 5'", area: "35", fl: "wet",
+      nEn: "Door from Bedroom 4. Toilet set north–south, shower and floor drain.",
+      nBn: "শোবার ঘর ৪ থেকে দরজা। উত্তর-দক্ষিণ বরাবর টয়লেট, শাওয়ার ও ফ্লোর ড্রেন।" },
+    { k: "basin", en: "Basin corner", bn: "বেসিন কর্নার", r: [[248, 99, 296, 135]], sz: "4' × 3'", area: "12", fl: "common",
+      nEn: "Hand-wash basin facing the dining.", nBn: "ডাইনিংয়ের দিকে হাত ধোয়ার বেসিন।" },
+    { k: "dining", en: "Dining", bn: "ডাইনিং", r: [[159, 135, 296, 303], [99, 183, 159, 243], [296, 183, 356, 243]], sz: "11'-5\" × 14'", area: "≈ 210", fl: "common",
+      nEn: "6-seat table with a 4' × 4' skylight above. All bedroom doors open from here.",
+      nBn: "ওপরে ৪' × ৪' স্কাইলাইটসহ ৬ জনের টেবিল। সব শোবার ঘরের দরজা এখান থেকে।" },
+    { k: "drawing", en: "Drawing room", bn: "ড্রইং রুম", r: [[159, 308, 296, 416]], sz: "11'-5\" × 9'", area: "103", fl: "common",
+      nEn: "3-seat sofa, two armchairs and a centre table. Main door D1 opens here from the verandah.",
+      nBn: "৩ সিটের সোফা, ২টি সিঙ্গেল সোফা ও সেন্টার টেবিল। বারান্দা থেকে মূল দরজা D1 এখানে খোলে।" },
+    { k: "verandah", en: "Verandah", bn: "বারান্দা", r: [[0, 426, 455, 474]], sz: "37'-11\" × 4'", area: "152", fl: "verandah",
+      nEn: "Patterned cement-tile floor, three arches on plastered columns, a decorative grill and a grill gate at the steps. 2\" below the rooms.",
+      nBn: "নকশা করা সিমেন্ট টাইলের মেঝে, প্লাস্টার খুঁটির ওপর তিনটি খিলান, নকশার গ্রিল আর সিঁড়ির সামনে গ্রিল গেট। ঘরের চেয়ে ২\" নিচু।" }
+  ];
+  var ROOM = {}; ROOMS.forEach(function (r) { ROOM[r.k] = r; });
+
+  var DOOR_TYPES = {
+    D1: { sz: "3'-6\" × 7' · 2 leaves", en: "Two-leaf teak door with raised panels and brass knobs, in a moulded cream frame with a gold crest.", bn: "উঁচু প্যানেল ও পিতলের হাতলসহ দুই পাল্লার সেগুন কাঠের দরজা, নকশা করা ফ্রেম আর ওপরে সোনালি ক্রেস্ট।" },
+    D2: { sz: "3' × 7'", en: "Wood panel or flush door. Opens flat against the side wall.", bn: "কাঠের প্যানেল বা ফ্লাশ দরজা। খুললে পাশের দেয়ালের সাথে লেগে থাকে।" },
+    D3: { sz: "2'-6\" × 7'", en: "PVC, so water does not rot it.", bn: "পিভিসি, পানিতে নষ্ট হয় না।" },
+    D4: { sz: "3' × 7'", en: "Outside door. Solid wood or steel with a strong bolt.", bn: "বাইরের দরজা। শক্ত কাঠ বা স্টিল, মজবুত ছিটকিনি।" },
+    O1: { sz: "3'-6\" × 7'", en: "Open arch, off to one side of the main door. Add a curtain or a door later.", bn: "খোলা পথ, মূল দরজার এক পাশে সরানো। পর্দা দিন বা পরে দরজা লাগান।" }
+  };
+  var DOORS = [
+    { id: "D1", o: "h", w1: 416, w2: 426, s: 206.5, e: 248.5, hinge: "s", swing: -1, kind: "main", en: "Main door", bn: "মূল দরজা" },
+    { id: "D2", o: "v", w1: 154, w2: 159, s: 139, e: 175, hinge: "e", swing: -1, kind: "room", en: "Bedroom 1 door", bn: "শোবার ঘর ১-এর দরজা" },
+    { id: "D2", o: "v", w1: 296, w2: 301, s: 139, e: 175, hinge: "e", swing: 1, kind: "room", en: "Bedroom 2 door", bn: "শোবার ঘর ২-এর দরজা" },
+    { id: "D2", o: "h", w1: 243, w2: 248, s: 114, e: 150, hinge: "e", swing: 1, kind: "room", en: "Bedroom 3 door", bn: "শোবার ঘর ৩-এর দরজা" },
+    { id: "D2", o: "h", w1: 243, w2: 248, s: 305, e: 341, hinge: "s", swing: 1, kind: "room", en: "Bedroom 4 door", bn: "শোবার ঘর ৪-এর দরজা" },
+    { id: "D2", o: "h", w1: 130, w2: 135, s: 199, e: 235, hinge: "e", swing: -1, kind: "room", en: "Kitchen door", bn: "রান্নাঘরের দরজা" },
+    { id: "D3", o: "h", w1: 94, w2: 99, s: 250, e: 280, hinge: "s", swing: -1, kind: "bath", en: "Common bath door", bn: "কমন বাথরুমের দরজা" },
+    { id: "D3", o: "h", w1: 243, w2: 248, s: 62, e: 92, hinge: "e", swing: -1, kind: "bath", en: "Attached bath door · Bedroom 3", bn: "এটাচড বাথের দরজা · শোবার ঘর ৩" },
+    { id: "D3", o: "h", w1: 243, w2: 248, s: 363, e: 393, hinge: "s", swing: -1, kind: "bath", en: "Attached bath door · Bedroom 4", bn: "এটাচড বাথের দরজা · শোবার ঘর ৪" },
+    { id: "D4", o: "v", w1: 0, w2: 10, s: 14, e: 50, hinge: "s", swing: 1, kind: "out", en: "Bedroom 1 outside door (north)", bn: "শোবার ঘর ১-এর বাইরের দরজা (উত্তর)" },
+    { id: "D4", o: "v", w1: 0, w2: 10, s: 252, e: 288, hinge: "s", swing: 1, kind: "out", en: "Bedroom 3 outside door (north)", bn: "শোবার ঘর ৩-এর বাইরের দরজা (উত্তর)" },
+    { id: "O1", o: "h", w1: 303, w2: 308, s: 250, e: 292, arch: true, en: "Drawing–dining opening", bn: "ড্রইং–ডাইনিং খোলা পথ" }
+  ];
+  var WIN_TYPES = {
+    W1: { sill: 30, head: 84, sz: "4'-6\" × 4'-6\"", sill_t: "2'-6\"", en: "Thai aluminium sliding window with MS grill.", bn: "থাই অ্যালুমিনিয়াম স্লাইডিং জানালা, এমএস গ্রিলসহ।" },
+    W2: { sill: 30, head: 84, sz: "3' × 4'-6\"", sill_t: "2'-6\"", en: "Either side of the main door, under the verandah roof.", bn: "মূল দরজার দুই পাশে, বারান্দার ছাদের নিচে।" },
+    W3: { sill: 42, head: 84, sz: "3' × 3'-6\"", sill_t: "3'-6\"", en: "Above the kitchen counter, with a 12\" exhaust fan beside it.", bn: "রান্নাঘরের কাউন্টারের ওপরে, পাশে ১২\" এগজস্ট ফ্যান।" },
+    V: { sill: 66, head: 84, sz: "2' × 1'-6\"", sill_t: "5'-6\"", en: "High bathroom vent for air and privacy.", bn: "বাতাস আর আড়ালের জন্য বাথরুমের উঁচু ভেন্টিলেটর।" }
+  };
+  var SIDE = { east: ["east", "পূর্ব"], west: ["west", "পশ্চিম"], north: ["north", "উত্তর"], south: ["south", "দক্ষিণ"] };
+  var WINDOWS = [
+    { id: "W1", o: "h", w1: 0, w2: 10, s: 56, e: 110, room: "bed1", side: "east" },
+    { id: "W1", o: "v", w1: 0, w2: 10, s: 60, e: 114, room: "bed1", side: "north" },
+    { id: "W1", o: "h", w1: 0, w2: 10, s: 371, e: 425, room: "bed2", side: "east" },
+    { id: "W1", o: "v", w1: 445, w2: 455, s: 60, e: 114, room: "bed2", side: "south" },
+    { id: "W1", o: "v", w1: 0, w2: 10, s: 316, e: 370, room: "bed3", side: "north" },
+    { id: "W1", o: "h", w1: 416, w2: 426, s: 30, e: 84, room: "bed3", side: "west" },
+    { id: "W1", o: "v", w1: 445, w2: 455, s: 300, e: 354, room: "bed4", side: "south" },
+    { id: "W1", o: "h", w1: 416, w2: 426, s: 371, e: 425, room: "bed4", side: "west" },
+    { id: "W2", o: "h", w1: 416, w2: 426, s: 166, e: 202, room: "drawing", side: "west" },
+    { id: "W2", o: "h", w1: 416, w2: 426, s: 253, e: 289, room: "drawing", side: "west" },
+    { id: "W3", o: "h", w1: 0, w2: 10, s: 183, e: 219, room: "kitchen", side: "east" },
+    { id: "V", o: "h", w1: 0, w2: 10, s: 260, e: 284, room: "bathC", side: "east" },
+    { id: "V", o: "v", w1: 0, w2: 10, s: 201, e: 225, room: "bathL", side: "north" },
+    { id: "V", o: "v", w1: 445, w2: 455, s: 201, e: 225, room: "bathR", side: "south" }
+  ];
+  // wall rectangles [x1, z1, x2, z2, outward face or null]
+  var WALLS = [
+    [0, 0, 455, 10, "-z"], [0, 416, 455, 426, "+z"], [0, 10, 10, 416, "-x"], [445, 10, 455, 416, "+x"],
+    [154, 10, 159, 183], [10, 178, 154, 183], [243, 10, 248, 135], [159, 130, 243, 135],
+    [248, 94, 296, 99], [296, 10, 301, 183], [301, 178, 445, 183],
+    [94, 183, 99, 243], [356, 183, 361, 243],
+    [10, 243, 154, 248], [154, 243, 159, 416], [301, 243, 445, 248], [296, 243, 301, 416],
+    [159, 303, 296, 308]
+  ];
+
+  /* ---------------- renderer, scene, camera ---------------- */
+  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.domElement.setAttribute("aria-label", "3D house model. Drag to rotate.");
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+  document.getElementById("loading").remove();
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xdce6e8);
+  scene.fog = new THREE.Fog(0xdce6e8, 140, 360);
+  var camera = new THREE.PerspectiveCamera(42, 1, 0.3, 900);
+  camera.position.set(-36, 17, 58);
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 4, 0);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.09;
+  controls.maxPolarAngle = Math.PI * 0.495;
+  controls.minDistance = 6;
+  controls.maxDistance = 190;
+
+  var hemi = new THREE.HemisphereLight(0xe6eef0, 0x7d7560, 0.62);
+  scene.add(hemi);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+  var sun = new THREE.DirectionalLight(0xfff0dc, 0.95);
+  sun.position.set(38, 60, 34);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  var sc = sun.shadow.camera; sc.left = -42; sc.right = 42; sc.top = 42; sc.bottom = -42; sc.near = 10; sc.far = 160;
+  sun.shadow.bias = -0.0006;
+  scene.add(sun);
+
+  var cutPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), CUT_FT);
+
+  /* ---------------- textures and materials ---------------- */
+  function rng(seed) { var s = seed; return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+  function canvas(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+  function toTex(c) {
+    var t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  function brickTexture() {
+    // 20" wide × 24" high tile: two 10" bricks per course, eight 3" courses, running bond
+    var c = canvas(512, 512), g = c.getContext("2d"), r = rng(11), rows = 8, rh = 64, bw = 256, m = 7, i, k;
+    g.fillStyle = "#b7aa9b"; g.fillRect(0, 0, 512, 512);
+    var cols = [];
+    for (i = 0; i < rows; i++) cols.push([0, 1].map(function () {
+      return "hsl(" + (7 + r() * 9).toFixed(1) + "," + (46 + r() * 14).toFixed(1) + "%," + (31 + r() * 12).toFixed(1) + "%)";
+    }));
+    for (i = 0; i < rows; i++) {
+      var off = (i % 2) ? bw / 2 : 0;
+      for (k = -1; k <= 2; k++) {
+        g.fillStyle = cols[i][((k % 2) + 2) % 2];
+        g.fillRect(k * bw + off + m / 2, i * rh + m / 2, bw - m, rh - m);
+      }
+    }
+    for (i = 0; i < 7000; i++) { g.fillStyle = r() < 0.5 ? "rgba(0,0,0,.07)" : "rgba(255,255,255,.05)"; g.fillRect(r() * 512, r() * 512, 2, 2); }
+    return toTex(c);
+  }
+  function tileTexture(base, grout, n) {
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(5), s = 256 / n, i, j;
+    g.fillStyle = grout; g.fillRect(0, 0, 256, 256);
+    var b = parseInt(base.slice(1), 16), R = (b >> 16) & 255, G = (b >> 8) & 255, Bl = b & 255;
+    for (i = 0; i < n; i++) for (j = 0; j < n; j++) {
+      var f = 1 + (r() - 0.5) * 0.06;
+      g.fillStyle = "rgb(" + Math.round(R * f) + "," + Math.round(G * f) + "," + Math.round(Bl * f) + ")";
+      g.fillRect(i * s + 1.5, j * s + 1.5, s - 3, s - 3);
+    }
+    return toTex(c);
+  }
+  function encausticTexture() {
+    // 8" cement tiles, 2 × 2 per texture: cream ground, terracotta circles at the corners, teal star in the centre
+    var c = canvas(512, 512), g = c.getContext("2d"), s = 256, i, j;
+    g.fillStyle = "#e9d7b4"; g.fillRect(0, 0, 512, 512);
+    g.fillStyle = "#b0512e";
+    for (i = 0; i <= 2; i++) for (j = 0; j <= 2; j++) { g.beginPath(); g.arc(i * s, j * s, s * 0.22, 0, Math.PI * 2); g.fill(); }
+    for (i = 0; i < 2; i++) for (j = 0; j < 2; j++) {
+      g.save(); g.translate(i * s + s / 2, j * s + s / 2);
+      g.fillStyle = "#2f6b66"; g.fillRect(-s * 0.2, -s * 0.2, s * 0.4, s * 0.4); g.rotate(Math.PI / 4); g.fillRect(-s * 0.2, -s * 0.2, s * 0.4, s * 0.4);
+      g.fillStyle = "#e9d7b4"; g.beginPath(); g.arc(0, 0, s * 0.11, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#b0512e"; g.beginPath(); g.arc(0, 0, s * 0.055, 0, Math.PI * 2); g.fill();
+      g.restore();
+      g.strokeStyle = "rgba(70,45,30,.35)"; g.lineWidth = 3; g.strokeRect(i * s + 1.5, j * s + 1.5, s - 3, s - 3);
+    }
+    return toTex(c);
+  }
+  function grassTexture() {
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(21), i, cols = ["#6f8c43", "#8aa656", "#98b25f", "#6a8540", "#7d9a4a", "#a3b86a"];
+    g.fillStyle = "#7f9a4e"; g.fillRect(0, 0, 256, 256);
+    for (i = 0; i < 2600; i++) { g.fillStyle = cols[(r() * cols.length) | 0]; g.fillRect(r() * 256, r() * 256, 2 + r() * 3, 1 + r() * 2); }
+    return toTex(c);
+  }
+  function earthTexture() {
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(33), i, cols = ["#b8986c", "#cdb08a", "#a88b62", "#d2b995"];
+    g.fillStyle = "#c2a57c"; g.fillRect(0, 0, 256, 256);
+    for (i = 0; i < 2200; i++) { g.fillStyle = cols[(r() * cols.length) | 0]; g.fillRect(r() * 256, r() * 256, 2 + r() * 4, 2 + r() * 3); }
+    return toTex(c);
+  }
+  function basketBrickTexture() {
+    // bricks laid in pairs, alternating direction (basket weave): texture covers 32" × 32"
+    var c = canvas(256, 256), g = c.getContext("2d"), r = rng(9), i, j, k;
+    g.fillStyle = "#8f7d6b"; g.fillRect(0, 0, 256, 256);
+    for (i = 0; i < 4; i++) for (j = 0; j < 4; j++) for (k = 0; k < 2; k++) {
+      g.fillStyle = "hsl(" + (8 + r() * 8).toFixed(1) + "," + (45 + r() * 12).toFixed(1) + "%," + (34 + r() * 10).toFixed(1) + "%)";
+      if ((i + j) % 2 === 0) g.fillRect(i * 64 + 2, j * 64 + k * 32 + 2, 60, 28); else g.fillRect(i * 64 + k * 32 + 2, j * 64 + 2, 28, 60);
+    }
+    return toTex(c);
+  }
+  function paintingTexture(seed, pal) {
+    // a small Bengal landscape: sky, sun, tree line, river with a boat, paddy fields, palms
+    var c = canvas(384, 256), g = c.getContext("2d"), r = rng(seed), i;
+    var sky = g.createLinearGradient(0, 0, 0, 150); sky.addColorStop(0, pal[0]); sky.addColorStop(1, pal[1]);
+    g.fillStyle = sky; g.fillRect(0, 0, 384, 256);
+    g.fillStyle = pal[2]; g.beginPath(); g.arc(80 + r() * 220, 62 + r() * 30, 22, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#3d6b3a"; g.fillRect(0, 142, 384, 28);
+    for (i = 0; i < 26; i++) { g.beginPath(); g.arc(i * 16, 144, 9 + r() * 8, Math.PI, 0); g.fill(); }
+    g.fillStyle = pal[3]; g.fillRect(0, 168, 384, 40);
+    g.fillStyle = "#7fae4a"; g.fillRect(0, 205, 384, 51);
+    g.strokeStyle = "rgba(60,90,40,.5)"; g.lineWidth = 2;
+    for (i = 0; i < 8; i++) { g.beginPath(); g.moveTo(0, 212 + i * 6); g.lineTo(384, 208 + i * 7); g.stroke(); }
+    var bx = 120 + r() * 140;
+    g.fillStyle = "#4a2e1e"; g.beginPath(); g.moveTo(bx - 40, 184); g.quadraticCurveTo(bx, 199, bx + 40, 184); g.lineTo(bx + 30, 191); g.lineTo(bx - 30, 191); g.fill();
+    g.fillStyle = "#efe6d0"; g.beginPath(); g.moveTo(bx, 184); g.lineTo(bx, 148); g.lineTo(bx + 24, 180); g.fill();
+    g.strokeStyle = "#2b3a22"; g.lineWidth = 3;
+    [30 + r() * 30, 320 + r() * 40].forEach(function (px) {
+      g.beginPath(); g.moveTo(px, 206); g.quadraticCurveTo(px + 6, 170, px + 2, 120); g.stroke();
+      for (var a = 0; a < 6; a++) { var an = -Math.PI / 2 + (a - 2.5) * 0.5; g.beginPath(); g.moveTo(px + 2, 120); g.quadraticCurveTo(px + 2 + Math.cos(an) * 18, 112 + Math.sin(an) * 10, px + 2 + Math.cos(an) * 30, 128 + Math.sin(an) * 14); g.stroke(); }
+    });
+    return toTex(c);
+  }
+  function rugTexture() {
+    var c = canvas(512, 384), g = c.getContext("2d"), i;
+    g.fillStyle = "#1f2f5a"; g.fillRect(0, 0, 512, 384);
+    g.fillStyle = "#8a2331"; g.fillRect(28, 28, 456, 328);
+    g.fillStyle = "#1f2f5a"; [[28, 28], [484, 28], [28, 356], [484, 356]].forEach(function (q) { g.beginPath(); g.arc(q[0], q[1], 46, 0, 6.3); g.fill(); });
+    g.fillStyle = "#d8b25a"; [[28, 28], [484, 28], [28, 356], [484, 356]].forEach(function (q) { g.beginPath(); g.arc(q[0], q[1], 12, 0, 6.3); g.fill(); });
+    g.strokeStyle = "#d8b25a"; g.lineWidth = 4; g.strokeRect(20, 20, 472, 344); g.strokeRect(36, 36, 440, 312);
+    for (i = 0; i < 22; i++) { g.beginPath(); g.arc(28 + i * 21.7, 10, 4, 0, 6.3); g.fill(); g.beginPath(); g.arc(28 + i * 21.7, 374, 4, 0, 6.3); g.fill(); }
+    g.save(); g.translate(256, 192);
+    g.fillStyle = "#1f2f5a"; g.beginPath();
+    for (i = 0; i < 16; i++) { var a = i * Math.PI / 8, rr = i % 2 ? 58 : 90; g.lineTo(Math.cos(a) * rr * 1.3, Math.sin(a) * rr); }
+    g.closePath(); g.fill();
+    g.fillStyle = "#d8b25a"; g.beginPath(); g.arc(0, 0, 34, 0, 6.3); g.fill();
+    g.fillStyle = "#8a2331"; g.beginPath(); g.arc(0, 0, 20, 0, 6.3); g.fill();
+    g.restore();
+    return toTex(c);
+  }
+  function kanthaTexture(base, thread) {
+    var c = canvas(256, 128), g = c.getContext("2d"), i, j;
+    g.fillStyle = base; g.fillRect(0, 0, 256, 128);
+    g.strokeStyle = thread; g.lineWidth = 2; g.setLineDash([5, 4]);
+    for (i = 8; i < 128; i += 9) { g.beginPath(); g.moveTo(6, i); g.lineTo(250, i); g.stroke(); }
+    g.setLineDash([]); g.fillStyle = thread;
+    for (i = 0; i < 5; i++) { var cx = 28 + i * 50; g.beginPath(); for (j = 0; j < 12; j++) { var a = j * Math.PI / 6, rr = j % 2 ? 7 : 15; g.lineTo(cx + Math.cos(a) * rr, 64 + Math.sin(a) * rr); } g.closePath(); g.fill(); }
+    g.lineWidth = 5; g.strokeStyle = thread; g.strokeRect(3, 3, 250, 122);
+    return toTex(c);
+  }
+  function clockTexture() {
+    var c = canvas(128, 128), g = c.getContext("2d"), i;
+    g.fillStyle = "#6b4a2e"; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = "#fbf7ee"; g.beginPath(); g.arc(64, 64, 58, 0, 6.3); g.fill();
+    g.fillStyle = "#2a2a2a"; for (i = 0; i < 12; i++) { var a = i * Math.PI / 6; g.fillRect(64 + Math.cos(a) * 48 - 2.5, 64 + Math.sin(a) * 48 - 2.5, 5, 5); }
+    g.strokeStyle = "#2a2a2a"; g.lineCap = "round";
+    g.lineWidth = 5; g.beginPath(); g.moveTo(64, 64); g.lineTo(88, 50); g.stroke();
+    g.lineWidth = 3; g.beginPath(); g.moveTo(64, 64); g.lineTo(58, 24); g.stroke();
+    return toTex(c);
+  }
+  function std(o) { return new THREE.MeshStandardMaterial(o); }
+  var M = {
+    brick: std({ map: brickTexture(), roughness: 0.95, side: THREE.DoubleSide }),
+    plaster: std({ color: 0xefe8db, roughness: 0.95, side: THREE.DoubleSide }),
+    ceiling: std({ color: 0xf5f2eb, roughness: 1 }),
+    concrete: std({ color: 0xa9a49a, roughness: 0.92, side: THREE.DoubleSide }),
+    plinth: std({ color: 0x8e8981, roughness: 0.95 }),
+    fl_room: std({ map: tileTexture("#e3d4bb", "#c9baa0", 2), roughness: 0.6 }),
+    fl_common: std({ map: tileTexture("#e2ded3", "#c6c0b3", 2), roughness: 0.6 }),
+    fl_wet: std({ map: tileTexture("#cfe0e4", "#a9bfc4", 3), roughness: 0.45 }),
+    fl_verandah: std({ map: encausticTexture(), roughness: 0.55 }),
+    wood: std({ color: 0x8a5a36, roughness: 0.7 }),
+    woodDark: std({ color: 0x5a3721, roughness: 0.65 }),
+    pvc: std({ color: 0xe6ecee, roughness: 0.5 }),
+    steelDoor: std({ color: 0x4d615e, roughness: 0.5, metalness: 0.3 }),
+    almirah: std({ color: 0x7b8e98, roughness: 0.45, metalness: 0.35 }),
+    frame: std({ color: 0x9ba4a8, roughness: 0.4, metalness: 0.5 }),
+    grill: std({ color: 0x2a2f2e, roughness: 0.6, metalness: 0.4 }),
+    glass: std({ color: 0x9cc7d6, transparent: true, opacity: 0.32, roughness: 0.05, metalness: 0.1, depthWrite: false, side: THREE.DoubleSide }),
+    mattress: std({ color: 0xf0ebe0, roughness: 0.9 }),
+    pillow: std({ color: 0xffffff, roughness: 0.9 }),
+    kantha: [0x2e7d7a, 0x8c2f39, 0xc9962b, 0x4f7a3a].map(function (c) { return std({ color: c, roughness: 0.9 }); }),
+    sofa: std({ color: 0x3e6b5e, roughness: 0.9 }),
+    granite: std({ color: 0x3f4242, roughness: 0.35 }),
+    cabinet: std({ color: 0xd8cebd, roughness: 0.8 }),
+    black: std({ color: 0x1c1e1e, roughness: 0.5 }),
+    ceramic: std({ color: 0xf6f6f3, roughness: 0.25 }),
+    steel: std({ color: 0xc4cacb, roughness: 0.3, metalness: 0.7 }),
+    fridge: std({ color: 0xe8ebeb, roughness: 0.35 }),
+    mirror: std({ color: 0xcfe2e9, roughness: 0.05, metalness: 0.8 }),
+    ground: std({ map: grassTexture(), roughness: 1 }),
+    yard: std({ map: earthTexture(), roughness: 1 }),
+    trunk: std({ color: 0x6a4a30, roughness: 0.9 }),
+    leaf: std({ color: 0x3d6a2d, roughness: 0.9, flatShading: true }),
+    cream: std({ color: 0xefe2c4, roughness: 0.85, side: THREE.DoubleSide }),
+    creamDark: std({ color: 0xdac59a, roughness: 0.85 }),
+    gold: std({ color: 0xc9a23a, roughness: 0.35, metalness: 0.8 }),
+    iron: std({ color: 0x1f3d35, roughness: 0.5, metalness: 0.45 }),
+    teak: std({ color: 0x6b3f1f, roughness: 0.55 }),
+    teakPanel: std({ color: 0x8a5528, roughness: 0.5 }),
+    cane: std({ color: 0xc49a5c, roughness: 0.8 }),
+    terracotta: std({ color: 0xa9542f, roughness: 0.9 }),
+    leafBright: std({ color: 0x4f8a36, roughness: 0.9, flatShading: true }),
+    marigold: std({ color: 0xe8a21c, roughness: 0.8 }),
+    rose: std({ color: 0xc8324a, roughness: 0.8 }),
+    lamp: std({ color: 0xfff1c8, emissive: 0xffc96b, emissiveIntensity: 1 })
+  };
+  Object.keys(M).forEach(function (k) { [].concat(M[k]).forEach(function (m) { if (!m.map) m.color.convertSRGBToLinear(); }); });
+  var BRICK_UV = [20 * IN, 24 * IN], TILE_UV = [2, 2];
+  // the 5 ft cut applies to the building only, not the ground or trees
+  var clipArr = [];
+  renderer.localClippingEnabled = true;
+  Object.keys(M).forEach(function (k) {
+    if (k === "ground" || k === "yard" || k === "trunk" || k === "leaf") return;
+    [].concat(M[k]).forEach(function (m) { m.clippingPlanes = clipArr; m.clipShadows = true; });
+  });
+  M.ground.map.repeat.set(90, 90); M.yard.map.repeat.set(14, 14);
+
+  /* ---------------- interior and garden materials ---------------- */
+  function mk(hex, o, clip) {
+    var m = std(Object.assign({ color: hex, roughness: 0.9 }, o || {}));
+    if (!m.map) m.color.convertSRGBToLinear();
+    if (clip) { m.clippingPlanes = clipArr; m.clipShadows = true; }
+    return m;
+  }
+  var MI = {
+    skirting: mk(0x6b4a2e, { roughness: 0.6 }, true),
+    bathTile: mk(0xffffff, { map: tileTexture("#d6ebee", "#b3cdd2", 4), roughness: 0.35 }, true),
+    kitchenTile: mk(0xffffff, { map: tileTexture("#f5f4ef", "#d3d1c7", 4), roughness: 0.35 }, true),
+    fanBody: mk(0xece8df, { roughness: 0.5 }, true),
+    fanBlade: mk(0x8a5a36, { roughness: 0.6 }, true),
+    rod: mk(0xc9a23a, { roughness: 0.35, metalness: 0.8 }, true),
+    frame: mk(0x7a5a2e, { roughness: 0.5 }, true),
+    plate: mk(0xf7f5ef, { roughness: 0.3 }, true),
+    fruits: [0xef8a1f, 0xe9c93a, 0xc33a2c, 0x7fb03a].map(function (c) { return mk(c, { roughness: 0.5 }, true); }),
+    bucket: mk(0x2f6fb0, { roughness: 0.5 }, true), mug: mk(0xc8412f, { roughness: 0.5 }, true),
+    towel: mk(0xe9b949, { roughness: 1 }, true), towel2: mk(0x5f9f8f, { roughness: 1 }, true),
+    cooker: mk(0xcfd4d6, { roughness: 0.3, metalness: 0.8 }, true),
+    jars: [0xd9a441, 0xb24a2f, 0x6f8f3e].map(function (c) { return mk(c, { roughness: 0.4 }, true); }),
+    potIn: mk(0xb35f35, {}, true), plant: mk(0x3f7f3a, { flatShading: true }, true)
+  };
+  var CURTAIN = { bed1: 0x2f7f7a, bed2: 0xd9745b, bed3: 0x2f4f86, bed4: 0x7d4a7f, drawing: 0x8a2331 };
+  var ME = {
+    palmTrunk: mk(0x7b6348, { roughness: 1 }), frond: mk(0x3f7a2e, { side: THREE.DoubleSide }),
+    coconut: mk(0x6b5a2a), mangoLeaf: mk(0x2f5e26, { flatShading: true }), jackLeaf: mk(0x355f2a, { flatShading: true }),
+    jackfruit: mk(0x9aa33e), bananaStem: mk(0x8faa55), bananaLeaf: mk(0x6da53a, { side: THREE.DoubleSide, roughness: 0.8 }),
+    bamboo: mk(0x9bb04a, { roughness: 0.6 }), bambooLeaf: mk(0x6f9a38, { flatShading: true }), betelTrunk: mk(0x8a8270),
+    water: mk(0x4f86a0, { roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.92 }), bank: mk(0x8c7a5a),
+    lilyPad: mk(0x4d8a3a, { side: THREE.DoubleSide }), lotus: mk(0xef9ab5), pollen: mk(0xf2d04a),
+    straw: mk(0xd2b25f, { roughness: 1, flatShading: true }), pump: mk(0x2f6b4f, { roughness: 0.5, metalness: 0.4 }),
+    slab: mk(0xa9a49a), soil: mk(0x5b4331), bush: mk(0x3e7a33, { flatShading: true }),
+    hib: mk(0xd8283c), mari: mk(0xf0a020), pink: mk(0xe86aa0), white: mk(0xf4f2ea),
+    cloud: mk(0xffffff, { roughness: 1, emissive: 0xffffff, emissiveIntensity: 0.3 }),
+    path: mk(0xffffff, { map: basketBrickTexture(), roughness: 0.95 }), blade: mk(0xffffff, { roughness: 0.9 })
+  };
+
+  /* ---------------- geometry helpers ---------------- */
+  function geoBox(x1, y1, z1, x2, y2, z2, uvs) {
+    var w = Math.max(Math.abs(x2 - x1) * IN, 0.002), h = Math.max(Math.abs(y2 - y1) * IN, 0.002), d = Math.max(Math.abs(z2 - z1) * IN, 0.002);
+    var g = new THREE.BoxGeometry(w, h, d);
+    g.translate(X((x1 + x2) / 2), Y((y1 + y2) / 2), Z((z1 + z2) / 2));
+    if (uvs) {
+      var p = g.attributes.position, nr = g.attributes.normal, uv = g.attributes.uv;
+      for (var i = 0; i < p.count; i++) {
+        var ax = Math.abs(nr.getX(i)), ay = Math.abs(nr.getY(i)), u, v;
+        if (ax > 0.5) { u = p.getZ(i); v = p.getY(i); } else if (ay > 0.5) { u = p.getX(i); v = p.getZ(i); } else { u = p.getX(i); v = p.getY(i); }
+        uv.setXY(i, u / uvs[0], v / uvs[1]);
+      }
+      uv.needsUpdate = true;
+    }
+    return g;
+  }
+  function addMesh(geo, material, parent, cast) {
+    var m = new THREE.Mesh(geo, material);
+    m.castShadow = cast !== false; m.receiveShadow = true;
+    parent.add(m); return m;
+  }
+  // B(parent, plan x1, plan z1, plan x2, plan z2, height y1, y2, material[, uv])
+  function B(parent, x1, z1, x2, z2, y1, y2, material, uvs) { return addMesh(geoBox(x1, y1, z1, x2, y2, z2, uvs), material, parent); }
+  function cyl(parent, cx, cz, r, y1, y2, material, sx) {
+    var g = new THREE.CylinderGeometry(r * IN, r * IN, (y2 - y1) * IN, 24);
+    var m = addMesh(g, material, parent);
+    m.position.set(X(cx), Y((y1 + y2) / 2), Z(cz));
+    if (sx) m.scale.x = sx;
+    return m;
+  }
+
+  /* ---------------- helpers for merged ornament (grills, balusters, carved doors) ---------------- */
+  var BGU = THREE.BufferGeometryUtils;
+  var WMAP = { x: X, y: Y, z: Z };
+  var LMAP = { x: function (u) { return u * IN; }, y: function (v) { return v * IN; }, z: function (w) { return w * IN; } };
+  function gbox(mp, x1, y1, z1, x2, y2, z2) {
+    var g = new THREE.BoxGeometry(Math.max(Math.abs(x2 - x1), 0.02) * IN, Math.max(Math.abs(y2 - y1), 0.02) * IN, Math.max(Math.abs(z2 - z1), 0.02) * IN);
+    g.translate(mp.x((x1 + x2) / 2), mp.y((y1 + y2) / 2), mp.z((z1 + z2) / 2));
+    return g;
+  }
+  function gring(mp, cx, cy, cz, r, tube, arc, rotZ) {
+    var g = new THREE.TorusGeometry(r * IN, tube * IN, 6, 32, arc || Math.PI * 2);
+    if (rotZ) g.rotateZ(rotZ);
+    g.translate(mp.x(cx), mp.y(cy), mp.z(cz));
+    return g;
+  }
+  function grod(mp, x1, y1, x2, y2, cz, t) {
+    var dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx * dx + dy * dy);
+    var g = new THREE.BoxGeometry(len * IN, t * IN, t * IN);
+    g.rotateZ(Math.atan2(dy, dx));
+    g.translate(mp.x((x1 + x2) / 2), mp.y((y1 + y2) / 2), mp.z(cz));
+    return g;
+  }
+  function Collector() { this.list = {}; }
+  Collector.prototype.add = function (k, g) { (this.list[k] = this.list[k] || []).push(g); };
+  Collector.prototype.flush = function (parent, mats) {
+    for (var k in this.list) {
+      var arr = this.list[k];
+      if (BGU && BGU.mergeBufferGeometries) addMesh(BGU.mergeBufferGeometries(arr, false), mats[k], parent);
+      else arr.forEach(function (g) { addMesh(g, mats[k], parent); });
+    }
+    this.list = {};
+  };
+  function swingTo(pivot, closedA, openA, amount) {
+    var delta = openA - closedA;
+    while (delta > Math.PI) delta -= 2 * Math.PI;
+    while (delta <= -Math.PI) delta += 2 * Math.PI;
+    pivot.rotation.y = closedA;
+    pivot.userData.closedA = closedA; pivot.userData.openA = closedA + delta * amount;
+    doorPivots.push(pivot);
+  }
+  // D1: two teak leaves with raised panels and brass knobs, in a moulded cream frame
+  function mainDoor(g, d) {
+    var L = (d.e - d.s) / 2;
+    [[d.s, 1], [d.e, -1]].forEach(function (h) {
+      var pivot = new THREE.Group(), holder = new THREE.Group(), c = new Collector();
+      pivot.position.set(X(h[0]), 0, Z(d.w1 + 0.9));
+      c.add("teak", gbox(LMAP, 0, 0.2, -0.9, L - 0.1, 83, 0.9));
+      [[6, 24], [29, 54], [59, 77]].forEach(function (q) {
+        c.add("panel", gbox(LMAP, 3, q[0], -1.25, L - 3, q[1], 1.25));
+        c.add("teak", gbox(LMAP, 5, q[0] + 2, -1.5, L - 5, q[1] - 2, 1.5));
+      });
+      [1.9, -1.9].forEach(function (zz) { var k = new THREE.SphereGeometry(0.95 * IN, 12, 8); k.translate((L - 2.4) * IN, 40 * IN, zz * IN); c.add("gold", k); });
+      c.flush(holder, { teak: M.teak, panel: M.teakPanel, gold: M.gold });
+      pivot.add(holder); g.add(pivot);
+      swingTo(pivot, h[1] > 0 ? 0 : Math.PI, Math.PI / 2, 0.92);
+    });
+    B(g, d.s - 3.5, 426, d.s, 427.6, 0, 89, M.cream); B(g, d.e, 426, d.e + 3.5, 427.6, 0, 89, M.cream);
+    B(g, d.s - 3.5, 426, d.e + 3.5, 427.6, 84, 89, M.cream);
+    B(g, d.s - 5, 426, d.e + 5, 429.5, 89, 92.5, M.creamDark);
+    B(g, d.s + 3, 426, d.e - 3, 428, 92.5, 97, M.cream);
+    addMesh(gring(WMAP, (d.s + d.e) / 2, 97, 427, 7, 0.9, Math.PI), M.gold, g);
+  }
+
+  /* ---------------- components (everything clickable) ---------------- */
+  var parts = [];
+  var groups = { structure: new THREE.Group(), roof: new THREE.Group(), furniture: new THREE.Group() };
+  scene.add(groups.structure); scene.add(groups.roof); scene.add(groups.furniture);
+  function part(cat, en, bn, sizeT, infoEn, infoBn, parent, extra) {
+    var g = new THREE.Group();
+    var p = { cat: cat, en: en, bn: bn, size: sizeT || "", infoEn: infoEn || "", infoBn: infoBn || "", group: g, inside: false };
+    if (extra) for (var k in extra) p[k] = extra[k];
+    g.userData.part = p;
+    parent.add(g); parts.push(p);
+    return g;
+  }
+
+  /* plinth, ground, yard */
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), M.ground);
+  ground.rotation.x = -Math.PI / 2; ground.position.y = Y(-30) - 0.02; ground.receiveShadow = true; scene.add(ground);
+  var yard = new THREE.Mesh(new THREE.CircleGeometry(40, 48), M.yard);
+  yard.rotation.x = -Math.PI / 2; yard.position.set(0, Y(-30) - 0.01, 2); yard.receiveShadow = true; scene.add(yard);
+
+  var gPlinth = part("structure", "Plinth", "প্লিন্থ", "2'-6\" high", "The whole floor sits 2'-6\" above the ground, above the highest flood seen here.", "পুরো মেঝে মাটি থেকে ২'-৬\" উঁচু, এলাকার সবচেয়ে বড় বন্যার পানির ওপরে।", groups.structure);
+  B(gPlinth, 0, 0, 455, 426, -30, 0, M.plinth);
+
+  /* room floors */
+  ROOMS.forEach(function (rm) {
+    var g = part("room", rm.en, rm.bn, rm.sz, rm.nEn, rm.nBn, groups.structure, { room: rm, inside: rm.k !== "verandah" });
+    rm.group = g;
+    rm.r.forEach(function (r) {
+      if (rm.k === "verandah") { B(g, r[0], r[1], r[2], r[3], -30, -2.4, M.plinth); B(g, r[0], r[1], r[2], r[3], -2.4, -2, M.fl_verandah, [16 * IN, 16 * IN]); return; }
+      B(g, r[0], r[1], r[2], r[3], 0, 0.4, M["fl_" + rm.fl], TILE_UV);
+    });
+  });
+
+  /* steps and verandah columns */
+  var gSteps = part("structure", "Steps", "সিঁড়ি", "4 steps · 6' wide", "Four steps from the verandah down to the yard, in line with the main door.", "বারান্দা থেকে উঠানে নামার ৪টি ধাপ, মূল দরজার সোজা সামনে।", groups.structure);
+  for (var si = 0; si < 4; si++) B(gSteps, 191.5, 474 + 10 * si, 263.5, 474 + 10 * (si + 1), -30, -2 - 5.6 * (si + 1), M.concrete);
+
+  /* walls with door and window openings */
+  var OPEN = [];
+  DOORS.forEach(function (d) { OPEN.push({ o: d.o, w1: d.w1, w2: d.w2, s: d.s, e: d.e, sill: 0, head: 84 }); });
+  WINDOWS.forEach(function (w) { var t = WIN_TYPES[w.id]; OPEN.push({ o: w.o, w1: w.w1, w2: w.w2, s: w.s, e: w.e, sill: t.sill, head: t.head }); });
+  var FACE = { "+x": 0, "-x": 1, "+z": 4, "-z": 5 }, OPP = { "+x": 1, "-x": 0, "+z": 5, "-z": 4 };
+  function wallMats(outer) {
+    if (!outer) return M.plaster;
+    var a = [M.brick, M.brick, M.brick, M.brick, M.brick, M.brick];
+    a[OPP[outer]] = M.plaster;
+    return a;
+  }
+  var gOuter = part("structure", "Outer walls", "বাইরের দেয়াল", "10\" red brick", "Exposed red brick outside, plastered inside. Ceiling height 10'-0\"; door and window tops at 7'-0\".", "বাইরে খোলা লাল ইট, ভেতরে প্লাস্টার। সিলিং ১০'-০\"; দরজা-জানালার মাথা ৭'-০\"।", groups.structure);
+  var gInner = part("structure", "Inner walls", "ভেতরের দেয়াল", "5\" brick, plastered", "Half-brick partition walls, plastered and painted on both sides.", "অর্ধেক ইটের পার্টিশন দেয়াল, দুই পাশে প্লাস্টার ও রং।", groups.structure, { inside: true });
+  WALLS.forEach(function (r) {
+    var x1 = r[0], z1 = r[1], x2 = r[2], z2 = r[3], outer = r[4], horiz = (x2 - x1) >= (z2 - z1);
+    var ops = OPEN.filter(function (o) {
+      return horiz ? (o.o === "h" && o.w1 >= z1 - 0.5 && o.w2 <= z2 + 0.5 && o.s >= x1 - 0.5 && o.e <= x2 + 0.5)
+                   : (o.o === "v" && o.w1 >= x1 - 0.5 && o.w2 <= x2 + 0.5 && o.s >= z1 - 0.5 && o.e <= z2 + 0.5);
+    }).sort(function (a, b) { return a.s - b.s; });
+    var target = outer ? gOuter : gInner, mats = wallMats(outer), a0 = horiz ? x1 : z1, a1 = horiz ? x2 : z2, cur = a0;
+    function seg(s, e, y1, y2) {
+      if (e - s < 0.01 || y2 - y1 < 0.01) return;
+      var g = horiz ? geoBox(s, y1, z1, e, y2, z2, BRICK_UV) : geoBox(x1, y1, s, x2, y2, e, BRICK_UV);
+      addMesh(g, mats, target);
+    }
+    ops.forEach(function (o) { seg(cur, o.s, 0, WALL_H); if (o.sill > 0) seg(o.s, o.e, 0, o.sill); seg(o.s, o.e, o.head, WALL_H); cur = o.e; });
+    seg(cur, a1, 0, WALL_H);
+  });
+
+  /* ---------------- painted inside walls, skirting and wall tiles ---------------- */
+  var PAINT = {
+    bed1: [0xd9e9cf, "mint green", "হালকা পুদিনা সবুজ"], bed2: [0xf5dac6, "soft peach", "হালকা পীচ রং"],
+    bed3: [0xd4e4f1, "sky blue", "আকাশি নীল"], bed4: [0xe7ddf0, "lavender", "হালকা বেগুনি"],
+    kitchen: [0xf6eab8, "butter yellow above white tiles", "সাদা টাইলসের ওপরে হালকা হলুদ"],
+    dining: [0xf3e7cd, "warm ivory", "উষ্ণ আইভরি"], drawing: [0xeedbb8, "light sand with a teak skirting", "হালকা বালু রং, সেগুন কাঠের স্কার্টিং"],
+    bathC: [0xeaf2f3, "aqua tiles up to 7 ft", "৭ ফুট পর্যন্ত নীলচে টাইলস"], bathL: [0xeaf2f3, "aqua tiles up to 7 ft", "৭ ফুট পর্যন্ত নীলচে টাইলস"],
+    bathR: [0xeaf2f3, "aqua tiles up to 7 ft", "৭ ফুট পর্যন্ত নীলচে টাইলস"], basin: [0xeaf2f3, "aqua tiles", "নীলচে টাইলস"]
+  };
+  function lineRoom(rm) {
+    var pc = PAINT[rm.k];
+    if (!pc) return;
+    var paint = mk(pc[0], { roughness: 0.92 }, true), wet = rm.fl === "wet" || rm.k === "basin", isK = rm.k === "kitchen";
+    var tileTop = wet ? (isK ? 66 : 84) : 0, tileM = isK ? MI.kitchenTile : MI.bathTile;
+    var pp = rm.group.userData.part;
+    pp.infoEn += " Walls: " + pc[1] + "."; pp.infoBn += " দেয়ালের রং: " + pc[2] + "।";
+    function bands(y1, y2) {
+      var out = [], cuts = wet ? [[0, tileTop, tileM], [tileTop, WALL_H, paint]] : [[0, 4, MI.skirting], [4, WALL_H, paint]];
+      cuts.forEach(function (b) { var a = Math.max(y1, b[0]), c = Math.min(y2, b[1]); if (c - a > 0.01) out.push([a, c, b[2]]); });
+      return out;
+    }
+    rm.r.forEach(function (r) {
+      var x1 = r[0], z1 = r[1], x2 = r[2], z2 = r[3];
+      var SIDES = [
+        { horiz: true, at: z1, lo: z1, hi: z1 + 0.4, hit: function (w) { return Math.abs(w[3] - z1) < 0.6 && w[0] < x2 && w[2] > x1; }, span: function (w) { return [Math.max(w[0], x1), Math.min(w[2], x2)]; }, op: function (o) { return o.o === "h" && Math.abs(o.w2 - z1) < 0.6; } },
+        { horiz: true, at: z2, lo: z2 - 0.4, hi: z2, hit: function (w) { return Math.abs(w[1] - z2) < 0.6 && w[0] < x2 && w[2] > x1; }, span: function (w) { return [Math.max(w[0], x1), Math.min(w[2], x2)]; }, op: function (o) { return o.o === "h" && Math.abs(o.w1 - z2) < 0.6; } },
+        { horiz: false, at: x1, lo: x1, hi: x1 + 0.4, hit: function (w) { return Math.abs(w[2] - x1) < 0.6 && w[1] < z2 && w[3] > z1; }, span: function (w) { return [Math.max(w[1], z1), Math.min(w[3], z2)]; }, op: function (o) { return o.o === "v" && Math.abs(o.w2 - x1) < 0.6; } },
+        { horiz: false, at: x2, lo: x2 - 0.4, hi: x2, hit: function (w) { return Math.abs(w[0] - x2) < 0.6 && w[1] < z2 && w[3] > z1; }, span: function (w) { return [Math.max(w[1], z1), Math.min(w[3], z2)]; }, op: function (o) { return o.o === "v" && Math.abs(o.w1 - x2) < 0.6; } }
+      ];
+      SIDES.forEach(function (sd) {
+        WALLS.filter(sd.hit).forEach(function (w) {
+          var sp = sd.span(w), cur = sp[0];
+          var ops = OPEN.filter(function (o) { return sd.op(o) && o.s < sp[1] && o.e > sp[0]; }).sort(function (a, b) { return a.s - b.s; });
+          function piece(s1, e1, y1, y2) {
+            if (e1 - s1 < 0.05) return;
+            bands(y1, y2).forEach(function (b) {
+              var lo = sd.lo, hi = sd.hi;
+              if (b[2] === MI.skirting) { if (lo === sd.at) hi = sd.at + 0.7; else lo = sd.at - 0.7; }
+              var g = sd.horiz ? geoBox(s1, b[0], lo, e1, b[1], hi, TILE_UV) : geoBox(lo, b[0], s1, hi, b[1], e1, TILE_UV);
+              addMesh(g, b[2], rm.group, false);
+            });
+          }
+          ops.forEach(function (o) {
+            var os = Math.max(o.s, sp[0]), oe = Math.min(o.e, sp[1]);
+            piece(cur, os, 0, WALL_H);
+            if (o.sill > 0) piece(os, oe, 0, o.sill);
+            piece(os, oe, o.head, WALL_H);
+            cur = oe;
+          });
+          piece(cur, sp[1], 0, WALL_H);
+        });
+      });
+    });
+  }
+  ROOMS.forEach(lineRoom);
+
+  /* sunshades (chhajja) over outside windows and the north doors */
+  var gSun = part("structure", "Sunshades", "সানশেড (কার্নিশ)", "1'-6\" deep", "Concrete sunshade over every outside window and the north doors. The west windows sit under the verandah roof instead.", "প্রতিটি বাইরের জানালা ও উত্তরের দরজার ওপর কংক্রিটের সানশেড। পশ্চিমের জানালাগুলো বারান্দার ছাদের নিচে।", groups.structure);
+  WINDOWS.forEach(function (w) {
+    if (w.id === "V") return;
+    if (w.o === "h" && w.w1 <= 0.1) B(gSun, w.s - 6, -18, w.e + 6, 0, 86, 89, M.concrete);
+    else if (w.o === "v" && w.w1 <= 0.1) B(gSun, -18, w.s - 6, 0, w.e + 6, 86, 89, M.concrete);
+    else if (w.o === "v" && w.w2 >= 454.9) B(gSun, 455, w.s - 6, 473, w.e + 6, 86, 89, M.concrete);
+  });
+  DOORS.forEach(function (d) { if (d.kind === "out") B(gSun, -24, d.s - 6, 0, d.e + 6, 86, 89, M.concrete); });
+
+  /* doors */
+  var doorPivots = [];
+  var LEAF = { main: M.woodDark, room: M.wood, bath: M.pvc, out: M.steelDoor };
+  DOORS.forEach(function (d) {
+    var t = DOOR_TYPES[d.id];
+    var g = part("door", d.id + " · " + d.en, d.id + " · " + d.bn, t.sz, t.en, t.bn, groups.structure, { inside: d.kind !== "main" && d.kind !== "out" });
+    if (d.arch) {
+      // show the arch as a thin timber frame so it can still be clicked
+      var fw = 2, mid = (d.w1 + d.w2) / 2;
+      B(g, d.s, d.w1 - 0.5, d.s + fw, d.w2 + 0.5, 0, 84, M.wood);
+      B(g, d.e - fw, d.w1 - 0.5, d.e, d.w2 + 0.5, 0, 84, M.wood);
+      B(g, d.s, d.w1 - 0.5, d.e, d.w2 + 0.5, 82, 84, M.wood);
+      return;
+    }
+    if (d.kind === "main") { mainDoor(g, d); return; }
+    var r = d.e - d.s, face = d.swing > 0 ? d.w2 : d.w1, inset = face - d.swing * 0.9, hx, hz, closedA, openA;
+    if (d.o === "h") {
+      hx = d.hinge === "s" ? d.s : d.e; hz = inset;
+      var ox = d.hinge === "s" ? d.e : d.s;
+      closedA = Math.atan2(0, Math.sign(ox - hx)); openA = Math.atan2(-d.swing, 0);
+    } else {
+      hz = d.hinge === "s" ? d.s : d.e; hx = inset;
+      var oz = d.hinge === "s" ? d.e : d.s;
+      closedA = Math.atan2(-Math.sign(oz - hz), 0); openA = Math.atan2(0, d.swing);
+    }
+    var pivot = new THREE.Group();
+    pivot.position.set(X(hx), 0, Z(hz));
+    var lg = new THREE.BoxGeometry(r * IN - 0.03, 83 * IN, 1.6 * IN); lg.translate(r * IN / 2, 83 * IN / 2 + 0.02, 0);
+    addMesh(lg, LEAF[d.kind], pivot);
+    var hg = new THREE.BoxGeometry(0.33, 0.07, 0.34); hg.translate(r * IN - 0.35, 36 * IN, 0);
+    addMesh(hg, M.steel, pivot);
+    var delta = openA - closedA;
+    while (delta > Math.PI) delta -= 2 * Math.PI;
+    while (delta <= -Math.PI) delta += 2 * Math.PI;
+    pivot.rotation.y = closedA;
+    pivot.userData.closedA = closedA; pivot.userData.openA = closedA + delta * 0.95;
+    g.add(pivot); doorPivots.push(pivot);
+  });
+
+  /* windows */
+  WINDOWS.forEach(function (w) {
+    var t = WIN_TYPES[w.id], rm = ROOM[w.room], sd = SIDE[w.side];
+    var g = part("window", w.id + " · " + rm.en + " (" + sd[0] + ")", w.id + " · " + rm.bn + " (" + sd[1] + ")",
+      t.sz + ", sill " + t.sill_t, t.en, t.bn, groups.structure, { sizeBn: bnNum(t.sz) + ", মেঝে থেকে " + bnNum(t.sill_t) });
+    var mid = (w.w1 + w.w2) / 2, fd = 2.5, fw = 1.5, sill = t.sill, head = t.head;
+    function bx(a1, a2, y1, y2, t1, t2, m) { return w.o === "h" ? B(g, a1, t1, a2, t2, y1, y2, m) : B(g, t1, a1, t2, a2, y1, y2, m); }
+    bx(w.s, w.e, sill, sill + fw, mid - fd / 2, mid + fd / 2, M.frame);
+    bx(w.s, w.e, head - fw, head, mid - fd / 2, mid + fd / 2, M.frame);
+    bx(w.s, w.s + fw, sill, head, mid - fd / 2, mid + fd / 2, M.frame);
+    bx(w.e - fw, w.e, sill, head, mid - fd / 2, mid + fd / 2, M.frame);
+    if (w.id !== "V") bx((w.s + w.e) / 2 - 0.75, (w.s + w.e) / 2 + 0.75, sill, head, mid - fd / 2, mid + fd / 2, M.frame);
+    var gl = bx(w.s + fw, w.e - fw, sill + fw, head - fw, mid - 0.2, mid + 0.2, M.glass); gl.castShadow = false;
+    if (w.id !== "V") {
+      var ot = w.w1 <= 0.1 ? w.w1 + 2 : w.w2 - 2;
+      for (var a = w.s + 5; a < w.e - 2; a += 5) bx(a - 0.3, a + 0.3, sill + fw, head - fw, ot - 0.3, ot + 0.3, M.grill);
+    } else {
+      for (var yy = sill + 4; yy < head - 2; yy += 4) bx(w.s + fw, w.e - fw, yy - 0.4, yy + 0.4, mid - 1, mid + 1, M.frame);
+    }
+  });
+
+  /* roof, parapet, skylight */
+  var slabMats = [M.concrete, M.concrete, M.concrete, M.ceiling, M.concrete, M.concrete];
+  var gSlab = part("roof", "Roof slab", "ছাদ", "5\" RCC", "Flat RCC roof over the house and the verandah, 10'-0\" above the floor. The 4' × 4' hole is for the skylight.", "বাড়ি ও বারান্দার ওপর সমান আরসিসি ছাদ, মেঝে থেকে ১০'-০\"। ৪' × ৪' ফাঁকা অংশটি স্কাইলাইটের জন্য।", groups.roof);
+  [[0, 0, 455, 219], [0, 267, 455, 474], [0, 219, 203.5, 267], [251.5, 219, 455, 267]].forEach(function (r) {
+    addMesh(geoBox(r[0], WALL_H, r[1], r[2], WALL_H + 5, r[3]), slabMats, gSlab);
+  });
+  var gPara = part("roof", "Parapet", "ছাদের রেলিং দেয়াল", "2'-6\" brick", "Low brick wall around the roof edge with a concrete coping on top.", "ছাদের কিনারায় নিচু ইটের দেয়াল, ওপরে কংক্রিটের কোপিং।", groups.roof);
+  [[0, 0, 455, 5], [0, 5, 5, 469], [450, 5, 455, 469]].forEach(function (r) { B(gPara, r[0], r[1], r[2], r[3], 125, 155, M.brick, BRICK_UV); });
+  [[-1, -1, 456, 6], [-1, 6, 6, 468], [449, 6, 456, 468]].forEach(function (r) { B(gPara, r[0], r[1], r[2], r[3], 155, 157, M.concrete); });
+  var gSky = part("roof", "Skylight", "স্কাইলাইট", "4' × 4'", "Over the dining table: raised brick curb, fixed glass on top, and an MS grill underneath for security.", "ডাইনিং টেবিলের ওপরে: উঁচু ইটের কার্ব, ওপরে স্থায়ী কাচ, আর নিরাপত্তার জন্য নিচে এমএস গ্রিল।", groups.roof);
+  [[198.5, 214, 256.5, 219], [198.5, 267, 256.5, 272], [198.5, 219, 203.5, 267], [251.5, 219, 256.5, 267]].forEach(function (r) { B(gSky, r[0], r[1], r[2], r[3], 125, 143, M.brick, BRICK_UV); });
+  var sg = B(gSky, 198.5, 214, 256.5, 272, 143, 144, M.glass); sg.castShadow = false;
+  for (var gx = 207.5; gx < 251; gx += 8) B(gSky, gx - 0.4, 219, gx + 0.4, 267, 118, 119, M.grill);
+
+  /* ---------------- decorative verandah: columns, arches, grill, gate, balustrade ---------------- */
+  var ZC = 469, RISE = 18, BAYS = [[10, 151], [161, 294], [304, 445]], COLS = [0, 151, 294, 445];
+  function archV(u, span) { var R = (span * span / 4 + RISE * RISE) / (2 * RISE); return (RISE - R) + Math.sqrt(Math.max(0, R * R - (u - span / 2) * (u - span / 2))); }
+  var gCols = part("structure", "Verandah columns", "বারান্দার খুঁটি", "10\" × 10\", plastered",
+    "Plastered brick columns with a stepped base, a moulded band and a capital that carries the arches.",
+    "প্লাস্টার করা ইটের খুঁটি: ধাপকাটা বেস, মাঝে নকশার ব্যান্ড, আর ওপরে খিলান ধরার ক্যাপিটাল।", groups.structure, { sizeBn: "১০\" × ১০\", প্লাস্টার" });
+  COLS.forEach(function (cx) {
+    B(gCols, cx - 3, 461, cx + 13, 477, -2, 3, M.creamDark);
+    B(gCols, cx - 1.5, 462.5, cx + 11.5, 475.5, 3, 7, M.cream);
+    B(gCols, cx, 464, cx + 10, 474, 7, 76, M.cream);
+    B(gCols, cx - 0.6, 463.4, cx + 10.6, 474.6, 36, 38.5, M.creamDark);
+    B(gCols, cx - 1.5, 462.5, cx + 11.5, 475.5, 76, 80, M.creamDark);
+    B(gCols, cx - 3, 461, cx + 13, 477, 80, 84, M.cream);
+  });
+  var gArch = part("structure", "Verandah arches", "বারান্দার খিলান", "3 arches",
+    "Three segmental arches with keystones, each filled with a sunburst grill, under a moulded cornice.",
+    "তিনটি খিলান, মাথায় কি-স্টোন, ভেতরে সূর্যরশ্মি নকশার গ্রিল, ওপরে কার্নিশ।", groups.structure, { sizeBn: "৩টি খিলান" });
+  BAYS.forEach(function (b) {
+    var a = b[0], span = b[1] - b[0], sh = new THREE.Shape(), N = 48, i;
+    sh.moveTo(0, 0);
+    for (i = 1; i <= N; i++) { var u = span * i / N; sh.lineTo(u * IN, archV(u, span) * IN); }
+    sh.lineTo(span * IN, 36 * IN); sh.lineTo(0, 36 * IN); sh.lineTo(0, 0);
+    var eg = new THREE.ExtrudeGeometry(sh, { depth: 10 * IN, bevelEnabled: false });
+    eg.translate(X(a), Y(84), Z(464));
+    addMesh(eg, M.cream, gArch);
+    var mid = a + span / 2;
+    B(gArch, mid - 3, 462.5, mid + 3, 475.5, 84 + RISE - 3, 84 + RISE + 7, M.creamDark);
+  });
+  B(gArch, -3, 474, 458, 477.5, 113, 116.5, M.creamDark);
+  B(gArch, -3, 474, 458, 476, 116.5, 120, M.cream);
+
+  function grillPanel(c, a, b, y0, y1, zc) {
+    var n = Math.max(2, Math.round((b - a) / 4.5)), step = (b - a) / n, mid = (y0 + y1) / 2, b1 = mid - 6, b2 = mid + 6, i;
+    c.add("grill", gbox(WMAP, a, y0, zc - 0.6, b, y0 + 1.2, zc + 0.6));
+    c.add("grill", gbox(WMAP, a, y1 - 1.2, zc - 0.6, b, y1, zc + 0.6));
+    c.add("grill", gbox(WMAP, a, y0, zc - 0.6, a + 1.2, y1, zc + 0.6));
+    c.add("grill", gbox(WMAP, b - 1.2, y0, zc - 0.6, b, y1, zc + 0.6));
+    c.add("grill", gbox(WMAP, a, b1 - 0.5, zc - 0.5, b, b1 + 0.5, zc + 0.5));
+    c.add("grill", gbox(WMAP, a, b2 - 0.5, zc - 0.5, b, b2 + 0.5, zc + 0.5));
+    for (i = 1; i < n; i++) { var x = a + i * step; c.add("grill", gbox(WMAP, x - 0.35, y0 + 1.2, zc - 0.35, x + 0.35, y1 - 1.2, zc + 0.35)); }
+    for (i = 0; i < n; i++) {
+      var cx = a + (i + 0.5) * step, r = Math.min(step * 0.42, 4.6), dy = y0 + (b1 - y0) / 2, dr = Math.min(step * 0.36, 3.4);
+      c.add("gold", gring(WMAP, cx, mid, zc, r, 0.32));
+      c.add("grill", gring(WMAP, cx, y1 - 1.2, zc, step * 0.42, 0.26, Math.PI, Math.PI));
+      c.add("grill", grod(WMAP, cx - dr, dy, cx, dy + dr, zc, 0.5)); c.add("grill", grod(WMAP, cx, dy + dr, cx + dr, dy, zc, 0.5));
+      c.add("grill", grod(WMAP, cx + dr, dy, cx, dy - dr, zc, 0.5)); c.add("grill", grod(WMAP, cx, dy - dr, cx - dr, dy, zc, 0.5));
+      c.add("gold", gring(WMAP, cx, b2 + (y1 - b2) / 2 - 1, zc, 1.4, 0.3));
+    }
+  }
+  function sunburst(c, a, b, zc) {
+    var span = b - a, mid = (a + b) / 2;
+    c.add("grill", gbox(WMAP, a, 83.4, zc - 0.6, b, 84.6, zc + 0.6));
+    c.add("gold", gring(WMAP, mid, 84, zc, 6, 0.5, Math.PI));
+    c.add("gold", gring(WMAP, mid, 84, zc, 3, 0.45, Math.PI));
+    for (var deg = 12; deg <= 168; deg += 12) {
+      var th = deg * Math.PI / 180, r = 7;
+      while (r < span) { var px = mid + r * Math.cos(th), py = r * Math.sin(th); if (py >= archV(px - a, span) - 0.8) break; r += 0.5; }
+      c.add("grill", grod(WMAP, mid + 6.4 * Math.cos(th), 84 + 6.4 * Math.sin(th), mid + r * Math.cos(th), 84 + r * Math.sin(th), zc, 0.55));
+    }
+  }
+  var gGrill = part("structure", "Verandah grill", "বারান্দার গ্রিল", "on a 2'-6\" knee wall",
+    "Decorative MS grill on a low brick wall: bars, a band of gold rings, diamonds below and a lace edge on top, painted deep green.",
+    "নিচু ইটের দেয়ালের ওপর নকশা করা এমএস গ্রিল: শিক, সোনালি রিংয়ের সারি, নিচে ডায়মন্ড আর ওপরে লেসের মতো কিনারা, গাঢ় সবুজ রং।", groups.structure, { sizeBn: "২'-৬\" নিচু দেয়ালের ওপর" });
+  var gc = new Collector();
+  [[10, 151], [161, 183.5], [271.5, 294], [304, 445]].forEach(function (k) {
+    B(gGrill, k[0], 466.5, k[1], 471.5, -2, 28, M.brick, BRICK_UV);
+    B(gGrill, k[0], 465.5, k[1], 472.5, 28, 30, M.cream);
+    grillPanel(gc, k[0], k[1], 30, 84, ZC);
+  });
+  BAYS.forEach(function (b) { sunburst(gc, b[0], b[1], ZC); });
+  gc.flush(gGrill, { grill: M.iron, gold: M.gold });
+
+  var gGate = part("door", "Verandah grill gate", "বারান্দার গ্রিল গেট", "6' × 7' · 2 leaves",
+    "Two-leaf iron gate in line with the steps: a gold medallion on each leaf, a solid kick plate at the bottom and a lace edge on top. Opens inward onto the verandah.",
+    "সিঁড়ির সোজা দুই পাল্লার লোহার গেট: প্রতি পাল্লায় সোনালি মেডালিয়ন, নিচে শক্ত পাত, ওপরে লেসের কিনারা। ভেতরে বারান্দার দিকে খোলে।", groups.structure, { sizeBn: "৬' × ৭' · দুই পাল্লা" });
+  [[183.5, 191.5], [263.5, 271.5]].forEach(function (q) {
+    B(gGate, q[0], 465, q[1], 473, -2, 80, M.cream);
+    B(gGate, q[0] - 1, 464, q[1] + 1, 474, -2, 2, M.creamDark);
+    B(gGate, q[0] - 1, 464, q[1] + 1, 474, 78, 84, M.creamDark);
+  });
+  [[191.5, 1], [263.5, -1]].forEach(function (h) {
+    var pivot = new THREE.Group(), holder = new THREE.Group(), c = new Collector(), L = 36, H = 85.5, u;
+    pivot.position.set(X(h[0]), Y(-2), Z(ZC));
+    c.add("grill", gbox(LMAP, 0, 0, -0.75, 1.5, H, 0.75));
+    c.add("grill", gbox(LMAP, L - 1.5, 0, -0.75, L, H, 0.75));
+    [0, 14, 48, H - 1.5].forEach(function (v) { c.add("grill", gbox(LMAP, 1.5, v, -0.75, L - 1.5, v + 1.5, 0.75)); });
+    c.add("grill", gbox(LMAP, 1.5, 1.5, -0.2, L - 1.5, 14, 0.2));
+    c.add("gold", gring(LMAP, L / 2, 7.75, 0, 3.6, 0.4));
+    for (u = 4.5; u < L - 2; u += 4.5) c.add("grill", gbox(LMAP, u - 0.35, 15.5, -0.35, u + 0.35, H - 1.5, 0.35));
+    c.add("gold", gring(LMAP, L / 2, 31.75, 0, 11, 0.55));
+    c.add("gold", gring(LMAP, L / 2, 31.75, 0, 5.2, 0.45));
+    [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(function (dd) { c.add("gold", gring(LMAP, L / 2 + dd[0] * 8.1, 31.75 + dd[1] * 8.1, 0, 2.5, 0.35)); });
+    [4.5, 13.5, 22.5, 31.5].forEach(function (x) { c.add("gold", gring(LMAP, x, 66.5, 0, 3.4, 0.35)); });
+    for (u = 2.25; u < L; u += 4.5) c.add("grill", gring(LMAP, u, H - 1.5, 0, 2.1, 0.28, Math.PI, Math.PI));
+    c.add("gold", gbox(LMAP, L - 5, 38, -1.4, L - 3.5, 46, 1.4));
+    c.flush(holder, { grill: M.iron, gold: M.gold });
+    pivot.add(holder); gGate.add(pivot);
+    swingTo(pivot, h[1] > 0 ? 0 : Math.PI, Math.PI / 2, 0.92);
+  });
+
+  var gBal = part("roof", "Front balustrade", "সামনের রেলিং (বালাস্টার)", "2'-6\" high",
+    "Vase-shaped balusters between pedestals over each column, along the front of the roof.",
+    "ছাদের সামনে খুঁটির ওপর পেডেস্টাল আর মাঝে ফুলদানি আকারের বালাস্টার।", groups.roof, { sizeBn: "২'-৬\" উঁচু" });
+  B(gBal, 0, 468.5, 455, 474.5, 125, 129, M.cream);
+  B(gBal, -1, 468, 456, 475, 150, 153.5, M.cream);
+  B(gBal, -1.5, 467.5, 456.5, 475.5, 153.5, 156, M.creamDark);
+  var PED = [0, 151, 294, 445, 75.5, 222.5, 369.5];
+  PED.forEach(function (px) { B(gBal, px, 467.5, px + 10, 475.5, 129, 150, M.cream); });
+  var balProf = [[0, 0], [2.2, 0], [2.2, 1.2], [1.3, 2.6], [1.15, 5], [2.4, 11], [1.2, 17], [1.4, 18.8], [2.2, 19.8], [2.2, 21], [0, 21]]
+    .map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); });
+  var balGeo = new THREE.LatheGeometry(balProf, 12), bcol = new Collector();
+  for (var bx = 4; bx < 452; bx += 6.5) {
+    if (PED.some(function (px) { return bx > px - 3 && bx < px + 13; })) continue;
+    var bg = balGeo.clone(); bg.translate(X(bx), Y(129), Z(471.5)); bcol.add("bal", bg);
+  }
+  bcol.flush(gBal, { bal: M.cream });
+
+
+  /* ---------------- furniture ---------------- */
+  var F = groups.furniture;
+  function furn(en, bn, sz, room, szBn) { return part("furniture", en + " · " + ROOM[room].en, bn + " · " + ROOM[room].bn, sz, "", "", F, { inside: true, sizeBn: szBn }); }
+  function bed(g, x, z, L, Wd, head, kantha) {
+    B(g, x, z, x + L, z + Wd, 0, 14, M.wood);
+    B(g, x + 1, z + 1, x + L - 1, z + Wd - 1, 14, 22, M.mattress);
+    if (head === "e") B(g, x + L - 2, z, x + L, z + Wd, 0, 40, M.wood); else B(g, x, z, x + 2, z + Wd, 0, 40, M.wood);
+    var pw = (Wd - 12) / 2, px = head === "e" ? x + L - 15 : x + 3;
+    B(g, px, z + 4, px + 12, z + 4 + pw, 22, 26, M.pillow);
+    B(g, px, z + 8 + pw, px + 12, z + 8 + 2 * pw, 22, 26, M.pillow);
+    if (head === "e") B(g, x + 1, z + 1, x + 52, z + Wd - 1, 22, 23.4, M.kantha[kantha]);
+    else B(g, x + L - 52, z + 1, x + L - 1, z + Wd - 1, 22, 23.4, M.kantha[kantha]);
+  }
+  bed(furn("Bed", "খাট", "6' × 7'", "bed1", "৬' × ৭'"), 70, 30, 84, 72, "e", 0);
+  bed(furn("Bed", "খাট", "6' × 7'", "bed2", "৬' × ৭'"), 301, 30, 84, 72, "w", 1);
+  bed(furn("Bed", "খাট", "5' × 7'", "bed3", "৫' × ৭'"), 70, 312, 84, 60, "e", 2);
+  bed(furn("Bed", "খাট", "5' × 7'", "bed4", "৫' × ৭'"), 301, 312, 84, 60, "w", 3);
+  [["bed1", [[136, 12], [136, 102]]], ["bed2", [[301, 12], [301, 102]]], ["bed3", [[136, 294], [136, 372]]], ["bed4", [[301, 294], [301, 372]]]].forEach(function (a) {
+    var g = furn("Side tables", "সাইড টেবিল", "1'-6\" × 1'-6\"", a[0], "১'-৬\" × ১'-৬\"");
+    a[1].forEach(function (p) { B(g, p[0], p[1], p[0] + 18, p[1] + 18, 0, 22, M.wood); });
+  });
+  [["bed1", [10, 120, 32, 162]], ["bed2", [423, 120, 445, 162]], ["bed3", [92, 398, 134, 416]], ["bed4", [397, 248, 439, 270]]].forEach(function (a) {
+    var g = furn("Almirah", "আলমারি", "3'-6\" × 1'-10\" × 6' high", a[0], "৩'-৬\" × ১'-১০\" × ৬' উঁচু"), r = a[1];
+    B(g, r[0], r[1], r[2], r[3], 0, 72, M.almirah);
+  });
+  [["bed1", 80, 98], ["bed2", 339, 357]].forEach(function (a) {
+    var g = furn("Dressing table", "ড্রেসিং টেবিল", "3' × 1'-6\"", a[0], "৩' × ১'-৬\"");
+    B(g, a[1], 160, a[1] + 36, 178, 0, 30, M.wood);
+    B(g, a[1] + 6, 176, a[1] + 30, 178, 30, 64, M.mirror);
+    cyl(g, a[2], 150, 6, 0, 18, M.wood);
+  });
+  [["bed3", 20, 29], ["bed4", 399, 408]].forEach(function (a) {
+    var g = furn("Study table and chair", "পড়ার টেবিল ও চেয়ার", "3' × 2'", a[0], "৩' × ২'");
+    B(g, a[1], 392, a[1] + 36, 416, 28, 30, M.wood);
+    B(g, a[1] + 1, 393, a[1] + 3, 415, 0, 28, M.wood); B(g, a[1] + 33, 393, a[1] + 35, 415, 0, 28, M.wood);
+    B(g, a[2], 374, a[2] + 18, 390, 16, 18, M.wood);
+    B(g, a[2], 374, a[2] + 18, 376, 18, 34, M.wood);
+    B(g, a[2], 376, a[2] + 2, 390, 0, 16, M.wood); B(g, a[2] + 16, 376, a[2] + 18, 390, 0, 16, M.wood);
+  });
+  (function () {
+    var g = furn("Counter, stove and sink", "কাউন্টার, চুলা ও সিংক", "2'-8\" high, 2' deep", "kitchen", "২'-৮\" উঁচু, ২' গভীর");
+    B(g, 159, 10, 243, 34, 0, 32, M.cabinet); B(g, 219, 34, 243, 90, 0, 32, M.cabinet);
+    B(g, 159, 10, 243, 34, 32, 33.5, M.granite); B(g, 219, 34, 243, 90, 32, 33.5, M.granite);
+    B(g, 181, 14, 209, 30, 33.5, 35.5, M.black);
+    cyl(g, 188, 22, 3.5, 35.5, 36.2, M.steel); cyl(g, 202, 22, 3.5, 35.5, 36.2, M.steel);
+    B(g, 222, 48, 240, 72, 33.5, 33.9, M.steel);
+    cyl(g, 231, 44, 0.8, 33.5, 42, M.steel);
+    var fr = furn("Fridge", "ফ্রিজ", "2'-4\" × 2'-4\" × 5'-2\" high", "kitchen", "২'-৪\" × ২'-৪\" × ৫'-২\" উঁচু");
+    B(fr, 161, 100, 189, 128, 0, 62, M.fridge);
+    var rk = furn("Rack", "তাক", "1'-4\" × 3'-10\"", "kitchen", "১'-৪\" × ৩'-১০\"");
+    B(rk, 159, 50, 175, 52, 0, 60, M.wood); B(rk, 159, 94, 175, 96, 0, 60, M.wood);
+    [0, 20, 40, 58].forEach(function (y) { B(rk, 159, 50, 175, 96, y, y + 2, M.wood); });
+  })();
+  function toilet(room, tankX, cz, face) {
+    var g = furn("Toilet", "টয়লেট", "set north–south", room, "উত্তর-দক্ষিণ বরাবর");
+    if (face > 0) { B(g, tankX, cz - 8, tankX + 6, cz + 8, 14, 30, M.ceramic); cyl(g, tankX + 15.5, cz, 7.5, 0, 15, M.ceramic, 9.5 / 7.5); }
+    else { B(g, tankX - 6, cz - 8, tankX, cz + 8, 14, 30, M.ceramic); cyl(g, tankX - 15.5, cz, 7.5, 0, 15, M.ceramic, 9.5 / 7.5); }
+  }
+  toilet("bathC", 296, 24, -1); toilet("bathL", 10, 228, 1); toilet("bathR", 445, 228, -1);
+  (function () {
+    var g = furn("Wash basin", "বেসিন", "1'-8\" × 1'-4\"", "basin", "১'-৮\" × ১'-৪\"");
+    cyl(g, 289, 120, 3, 0, 28, M.ceramic); B(g, 280, 110, 296, 130, 28, 33, M.ceramic);
+    cyl(g, 293, 120, 0.7, 33, 38, M.steel);
+  })();
+  (function () {
+    var g = furn("Dining table and 6 chairs", "ডাইনিং টেবিল ও ৬টি চেয়ার", "5' × 3' table", "dining", "৫' × ৩' টেবিল");
+    B(g, 197.5, 225, 257.5, 261, 28, 30, M.wood);
+    [[199, 227], [254, 227], [199, 257], [254, 257]].forEach(function (p) { B(g, p[0], p[1], p[0] + 2, p[1] + 2, 0, 28, M.wood); });
+    [[205, 207, 18, 16, "n"], [232, 207, 18, 16, "n"], [205, 263, 18, 16, "s"], [232, 263, 18, 16, "s"], [179, 234, 16, 18, "w"], [259.5, 234, 16, 18, "e"]].forEach(function (c) {
+      var x = c[0], z = c[1], w = c[2], h = c[3];
+      B(g, x, z, x + w, z + h, 16, 18, M.wood);
+      B(g, x + 1, z + 1, x + 3, z + 3, 0, 16, M.wood); B(g, x + w - 3, z + 1, x + w - 1, z + 3, 0, 16, M.wood);
+      B(g, x + 1, z + h - 3, x + 3, z + h - 1, 0, 16, M.wood); B(g, x + w - 3, z + h - 3, x + w - 1, z + h - 1, 0, 16, M.wood);
+      if (c[4] === "n") B(g, x, z, x + w, z + 2, 18, 36, M.wood);
+      if (c[4] === "s") B(g, x, z + h - 2, x + w, z + h, 18, 36, M.wood);
+      if (c[4] === "w") B(g, x, z, x + 2, z + h, 18, 36, M.wood);
+      if (c[4] === "e") B(g, x + w - 2, z, x + w, z + h, 18, 36, M.wood);
+    });
+  })();
+  (function () {
+    var g = furn("Sofa (3 seats)", "সোফা (৩ সিট)", "6'-6\" × 2'-8\"", "drawing", "৬'-৬\" × ২'-৮\"");
+    B(g, 159, 330, 191, 408, 0, 16, M.sofa); B(g, 159, 330, 167, 408, 16, 32, M.sofa);
+    B(g, 159, 330, 191, 334, 16, 24, M.sofa); B(g, 159, 404, 191, 408, 16, 24, M.sofa);
+    var ac = furn("Armchairs (2)", "সিঙ্গেল সোফা (২টি)", "2'-2\" × 2'-2\" each", "drawing", "প্রতিটি ২'-২\" × ২'-২\"");
+    [334, 366].forEach(function (z) {
+      B(ac, 270, z, 296, z + 26, 0, 16, M.sofa); B(ac, 290, z, 296, z + 26, 16, 32, M.sofa);
+      B(ac, 270, z, 290, z + 3, 16, 24, M.sofa); B(ac, 270, z + 23, 290, z + 26, 16, 24, M.sofa);
+    });
+    var ct = furn("Centre table", "সেন্টার টেবিল", "3' × 1'-10\"", "drawing", "৩' × ১'-১০\"");
+    B(ct, 209, 350, 245, 372, 14, 16, M.woodDark); B(ct, 211, 352, 243, 370, 0, 14, M.wood);
+  })();
+
+
+  (function () {
+    var seat = furn("Bench and 2 moras", "বেঞ্চ ও ২টি মোড়া", "bench 5'-6\" long", "verandah", "বেঞ্চ ৫'-৬\" লম্বা");
+    seat.userData.part.inside = false;
+    B(seat, 24, 430, 90, 446, 13, 15.5, M.wood);
+    [[26, 432], [86, 432], [26, 442], [86, 442]].forEach(function (q) { B(seat, q[0], q[1], q[0] + 2, q[1] + 2, -2, 13, M.wood); });
+    B(seat, 24, 427, 90, 429, 15.5, 33, M.wood);
+    var mora = new THREE.LatheGeometry([[0, 0], [8, 0], [8, 1], [5.2, 8], [8, 15], [8, 16.5], [0, 16.5]].map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); }), 20);
+    [[383, 442], [410, 447]].forEach(function (q) { var m = addMesh(mora.clone(), M.cane, seat); m.position.set(X(q[0]), Y(-2), Z(q[1])); });
+    var pots = furn("Flower pots", "ফুলের টব", "4 pots by the steps", "verandah", "সিঁড়ির পাশে ৪টি টব");
+    pots.userData.part.inside = false;
+    var potGeo = new THREE.LatheGeometry([[0, 0], [5.5, 0], [7.5, 13], [8.5, 14], [8.5, 15.5], [0, 15.5]].map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); }), 20);
+    [[176, 486], [279, 486], [176, 504], [279, 504]].forEach(function (q) {
+      var m = addMesh(potGeo.clone(), M.terracotta, pots); m.position.set(X(q[0]), Y(-30), Z(q[1]));
+      [[0, 0, 6, 22], [3, 2, 4.5, 19], [-3, 1, 4.5, 19], [0, -3, 4, 18]].forEach(function (l) {
+        var sp = addMesh(new THREE.IcosahedronGeometry(l[2] * IN, 1), M.leafBright, pots); sp.position.set(X(q[0] + l[0]), Y(-30 + l[3]), Z(q[1] + l[1]));
+      });
+      [[2, 3], [-2.5, -1], [1, -3.5]].forEach(function (f, i) {
+        var fl = addMesh(new THREE.SphereGeometry(1.6 * IN, 10, 8), i === 1 ? M.rose : M.marigold, pots); fl.position.set(X(q[0] + f[0]), Y(-30 + 26), Z(q[1] + f[1]));
+      });
+    });
+    var lamps = furn("Hanging lanterns", "ঝুলন্ত লণ্ঠন", "3 lanterns", "verandah", "৩টি লণ্ঠন");
+    lamps.userData.part.inside = false;
+    [80.5, 227.5, 374.5].forEach(function (x) {
+      B(lamps, x - 0.3, 444.7, x + 0.3, 445.3, 104, 120, M.gold);
+      B(lamps, x - 3.6, 441.4, x + 3.6, 448.6, 103, 104.5, M.gold);
+      var lg = addMesh(geoBox(x - 3, 94, 442, x + 3, 103, 448), M.lamp, lamps); lg.castShadow = false;
+      B(lamps, x - 3.6, 441.4, x + 3.6, 448.6, 92.5, 94, M.gold);
+    });
+  })();
+
+  /* ---------------- interior decoration ---------------- */
+  var fans = [];
+  function ball(g, x, z, y, r, mat) { var m = addMesh(new THREE.SphereGeometry(r * IN, 12, 8), mat, g); m.position.set(X(x), Y(y), Z(z)); return m; }
+  function lathe(pts, seg) { return new THREE.LatheGeometry(pts.map(function (q) { return new THREE.Vector2(q[0] * IN, q[1] * IN); }), seg || 16); }
+  (function () {
+    var g = part("furniture", "Ceiling fans", "সিলিং ফ্যান", "6 fans, 48\"", "A 48\" ceiling fan in each bedroom, the dining and the drawing room.", "প্রতিটি শোবার ঘর, ডাইনিং ও ড্রইং রুমে একটি করে ৪৮\" সিলিং ফ্যান।", F, { inside: true, sizeBn: "৬টি ফ্যান, ৪৮\"" });
+    [[82, 94], [373, 94], [82, 330], [373, 330], [227.5, 165], [227.5, 345]].forEach(function (q) {
+      cyl(g, q[0], q[1], 0.5, 108, 120, MI.rod);
+      cyl(g, q[0], q[1], 4, 104, 108, MI.fanBody);
+      var rotor = new THREE.Group(); rotor.position.set(X(q[0]), Y(105.5), Z(q[1]));
+      for (var i = 0; i < 3; i++) {
+        var bg = new THREE.BoxGeometry(21 * IN, 0.3 * IN, 4.5 * IN); bg.translate(14.5 * IN, 0, 0); bg.rotateY(i * Math.PI * 2 / 3);
+        addMesh(bg, MI.fanBlade, rotor);
+      }
+      g.add(rotor); fans.push(rotor);
+    });
+  })();
+  (function () {
+    var g = part("furniture", "Curtains", "পর্দা", "every bedroom and drawing-room window", "Cotton curtains on brass rods, a different colour in each room.", "পিতলের রডে সুতির পর্দা, প্রতিটি ঘরে আলাদা রং।", F, { inside: true, sizeBn: "প্রতিটি শোবার ঘর ও ড্রইং রুমের জানালায়" });
+    WINDOWS.forEach(function (w) {
+      var col = CURTAIN[w.room];
+      if (!col || w.id === "V") return;
+      var mat = mk(col, { roughness: 1, side: THREE.DoubleSide }, true);
+      var inner = w.w1 <= 0.1 ? w.w2 : w.w1, dir = w.w1 <= 0.1 ? 1 : -1, t = inner + dir * 2.2;
+      var rg = new THREE.CylinderGeometry(0.45 * IN, 0.45 * IN, (w.e - w.s + 16) * IN, 8); rg.rotateZ(Math.PI / 2);
+      if (w.o === "v") rg.rotateY(Math.PI / 2);
+      var rod = addMesh(rg, MI.rod, g);
+      if (w.o === "h") rod.position.set(X((w.s + w.e) / 2), Y(90), Z(t)); else rod.position.set(X(t), Y(90), Z((w.s + w.e) / 2));
+      var panels = w.id === "W2" ? [[w.s - 2, w.s + 6], [w.e - 6, w.e + 2]] : [[w.s - 6, w.s + 6], [w.e - 6, w.e + 6]];
+      panels.forEach(function (pp) {
+        var wd = pp[1] - pp[0], ht = 90 - 32, pg = new THREE.PlaneGeometry(wd * IN, ht * IN, 14, 1), pos = pg.attributes.position;
+        for (var i = 0; i < pos.count; i++) pos.setZ(i, Math.sin((pos.getX(i) / (wd * IN)) * Math.PI * 6) * 0.8 * IN);
+        pg.computeVertexNormals();
+        if (w.o === "v") pg.rotateY(Math.PI / 2);
+        var m = addMesh(pg, mat, g); m.castShadow = false;
+        var cx = (pp[0] + pp[1]) / 2, cy = 32 + ht / 2;
+        if (w.o === "h") m.position.set(X(cx), Y(cy), Z(t)); else m.position.set(X(t), Y(cy), Z(cx));
+      });
+    });
+  })();
+  function painting(parent, axis, face, dir, c, y1, y2, wd, tex) {
+    var lo = Math.min(face + dir * 0.4, face + dir * 1.4), hi = Math.max(face + dir * 0.4, face + dir * 1.4), a1 = c - wd / 2, a2 = c + wd / 2, fw = 1.6;
+    function fr(p1, p2, q1, q2) { if (axis === "x") B(parent, lo, p1, hi, p2, q1, q2, MI.frame); else B(parent, p1, lo, p2, hi, q1, q2, MI.frame); }
+    fr(a1, a2, y1, y1 + fw); fr(a1, a2, y2 - fw, y2); fr(a1, a1 + fw, y1, y2); fr(a2 - fw, a2, y1, y2);
+    var m = new THREE.Mesh(new THREE.PlaneGeometry((wd - 2 * fw) * IN, (y2 - y1 - 2 * fw) * IN), mk(0xffffff, { map: tex, roughness: 0.8 }, true));
+    var mid = face + dir * 0.9;
+    if (axis === "x") { m.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; m.position.set(X(mid), Y((y1 + y2) / 2), Z(c)); }
+    else { m.rotation.y = dir > 0 ? 0 : Math.PI; m.position.set(X(c), Y((y1 + y2) / 2), Z(mid)); }
+    m.receiveShadow = true; parent.add(m);
+  }
+  (function () {
+    var PAL = [["#f6b37a", "#fbe3c0", "#fff4d6", "#6f9fc0"], ["#7fb3dc", "#d7ebf5", "#fff6c9", "#5b8fb8"], ["#e0735a", "#f7c48a", "#ffe19a", "#b86a5a"], ["#6d6aa8", "#e7a7a0", "#ffd0a0", "#6a6e9e"], ["#9cc9e8", "#f1e6c8", "#fff1b8", "#4f86a8"]];
+    [["bed1", 154, -1, 66], ["bed2", 301, 1, 66], ["bed3", 154, -1, 342], ["bed4", 301, 1, 342]].forEach(function (q, i) {
+      var g = furn("Painting", "ছবি", "2'-6\" × 1'-6\"", q[0], "২'-৬\" × ১'-৬\"");
+      painting(g, "x", q[1], q[2], q[3], 43, 61, 30, paintingTexture(101 + i, PAL[i]));
+    });
+    var gd = furn("Painting", "ছবি", "3'-4\" × 1'-8\"", "drawing", "৩'-৪\" × ১'-৮\"");
+    painting(gd, "x", 159, 1, 369, 38, 58, 40, paintingTexture(120, PAL[4]));
+    var gc = furn("Wall clock", "দেয়াল ঘড়ি", "1' across", "dining", "১' চওড়া");
+    var cg = new THREE.CylinderGeometry(6 * IN, 6 * IN, 0.9 * IN, 32); cg.rotateX(-Math.PI / 2);
+    var clk = addMesh(cg, [MI.frame, mk(0xffffff, { map: clockTexture(), roughness: 0.6 }, true), MI.frame], gc);
+    clk.position.set(X(200), Y(52), Z(302.1));
+  })();
+  (function () {
+    var g = part("furniture", "Rugs and kantha mats", "কার্পেট ও নকশি কাঁথার মাদুর", "drawing room and bedrooms", "A patterned carpet in the drawing room and a nakshi-kantha mat beside every bed.", "ড্রইং রুমে নকশা করা কার্পেট আর প্রতিটি খাটের পাশে নকশি কাঁথার মাদুর।", F, { inside: true, sizeBn: "ড্রইং রুম ও শোবার ঘরে" });
+    function rug(x1, z1, x2, z2, tex) {
+      var pg = new THREE.PlaneGeometry((x2 - x1) * IN, (z2 - z1) * IN); pg.rotateX(-Math.PI / 2);
+      var m = addMesh(pg, mk(0xffffff, { map: tex, roughness: 1 }, true), g, false);
+      m.position.set(X((x1 + x2) / 2), Y(0.55), Z((z1 + z2) / 2));
+    }
+    rug(196, 336, 262, 392, rugTexture());
+    rug(80, 106, 130, 128, kanthaTexture("#f1e4c8", "#b33a3a"));
+    rug(325, 106, 377, 128, kanthaTexture("#f3e6cf", "#2f5f8a"));
+    rug(80, 288, 130, 310, kanthaTexture("#efe2c6", "#2f7a5a"));
+    rug(325, 288, 377, 310, kanthaTexture("#f2e3d0", "#8a3a6a"));
+  })();
+  (function () {
+    var g = part("furniture", "Indoor plants", "ঘরের গাছ", "2 pots", "Leafy pot plants in the drawing-room and dining corners.", "ড্রইং রুম আর ডাইনিংয়ের কোণে টবের গাছ।", F, { inside: true, sizeBn: "২টি টব" });
+    [[167, 318], [168, 294]].forEach(function (q) {
+      var m = addMesh(lathe([[0, 0], [4, 0], [5.4, 10], [6, 11], [0, 11]]), MI.potIn, g); m.position.set(X(q[0]), 0, Z(q[1]));
+      var r = rng(Math.round(q[0] + q[1]));
+      for (var i = 0; i < 6; i++) { var l = addMesh(new THREE.IcosahedronGeometry((3 + r() * 2.5) * IN, 1), MI.plant, g); l.position.set(X(q[0] + (r() - 0.5) * 7), Y(15 + r() * 16), Z(q[1] + (r() - 0.5) * 7)); }
+    });
+  })();
+  (function () {
+    var g = furn("Pots, cooker and jars", "হাঁড়ি, প্রেশার কুকার ও বয়াম", "on the stove and rack", "kitchen", "চুলা ও তাকে");
+    cyl(g, 188, 22, 3.8, 36.2, 44, MI.cooker); cyl(g, 188, 22, 0.8, 44, 45.5, M.black); B(g, 191.5, 21, 199, 23, 42, 43.2, M.black);
+    cyl(g, 202, 22, 4.4, 36.2, 41, MI.cooker);
+    [[58, 22], [70, 22], [82, 22], [62, 42], [76, 42], [88, 42]].forEach(function (q, i) { cyl(g, 167, q[0], 2.2, q[1], q[1] + 7, MI.jars[i % 3]); });
+    cyl(g, 231, 82, 4, 33.5, 52, MI.bucket); cyl(g, 231, 82, 4.3, 52, 53.5, MI.plate);
+  })();
+  (function () {
+    var g = furn("Plates and fruit bowl", "প্লেট ও ফলের বাটি", "6 places", "dining", "৬ জনের");
+    [[214, 229], [241, 229], [214, 257], [241, 257], [202, 243], [253, 243]].forEach(function (q) { cyl(g, q[0], q[1], 4.5, 30, 30.35, MI.plate); });
+    cyl(g, 227.5, 243, 5, 30, 32.5, MI.plate);
+    [[226, 241], [229.5, 244.5], [226.5, 246], [230, 240.5], [228, 243]].forEach(function (q, i) { ball(g, q[0], q[1], i === 4 ? 35.5 : 33.8, 1.7, MI.fruits[i % 4]); });
+  })();
+  (function () {
+    var g = part("furniture", "Bath accessories", "বাথরুমের জিনিস", "bucket, mug, towel, mirror", "A bucket and mug in every bath, towels on brass rails, and a mirror over the wash basin.", "প্রতিটি বাথরুমে বালতি ও মগ, পিতলের রেলে তোয়ালে, আর বেসিনের ওপরে আয়না।", F, { inside: true, sizeBn: "বালতি, মগ, তোয়ালে, আয়না" });
+    var bucket = lathe([[0, 0], [4.2, 0], [5.2, 11], [5.5, 11.6], [0, 11.6]], 18);
+    [[257, 50], [50, 196], [405, 196]].forEach(function (q) {
+      var m = addMesh(bucket.clone(), MI.bucket, g); m.position.set(X(q[0]), 0, Z(q[1]));
+      cyl(g, q[0] + 8, q[1], 1.8, 0, 4.2, MI.mug);
+    });
+    B(g, 248.4, 30, 249.6, 46, 44, 64, MI.towel); B(g, 248.4, 28, 250, 48, 64, 65, MI.rod);
+    B(g, 20, 183.4, 36, 184.6, 44, 64, MI.towel2); B(g, 18, 183.4, 38, 185, 64, 65, MI.rod);
+    B(g, 420, 183.4, 436, 184.6, 44, 64, MI.towel); B(g, 418, 183.4, 438, 185, 64, 65, MI.rod);
+    B(g, 295.2, 110.5, 295.6, 129.5, 38.5, 61.5, MI.frame); B(g, 294.9, 112, 295.2, 128, 40, 60, M.mirror);
+  })();
+
+  /* village trees */
+  function tree(x, z, s) {
+    var t = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * s, 0.6 * s, 9 * s, 8), M.trunk);
+    t.position.set(x, Y(-30) + 4.5 * s, z); t.castShadow = true; scene.add(t);
+    [[0, 11, 0, 4.6], [2.4, 9.6, 1.2, 3.4], [-2.2, 10, -1, 3.6], [0.6, 13, -1.4, 3]].forEach(function (b) {
+      var c = new THREE.Mesh(new THREE.IcosahedronGeometry(b[3] * s, 1), M.leaf);
+      c.position.set(x + b[0] * s, Y(-30) + b[1] * s, z + b[2] * s); c.castShadow = true; c.receiveShadow = true; scene.add(c);
+    });
+  }
+  /* ---------------- garden and yard ---------------- */
+  var yardG = new THREE.Group(); scene.add(yardG);
+  var GY = Y(-30);
+  function frondGeo(len, wid, droop) {
+    var g = new THREE.PlaneGeometry(wid, len, 2, 8), q = g.attributes.position;
+    for (var i = 0; i < q.count; i++) { var v = (q.getY(i) + len / 2) / len; q.setX(i, q.getX(i) * (1 - 0.8 * v)); q.setZ(i, droop * v * v); q.setY(i, v * len); }
+    g.computeVertexNormals(); return g;
+  }
+  function crown(parent, x, y, z, n, len, wid, droop, tilt, mat, seed) {
+    var r = rng(seed);
+    for (var i = 0; i < n; i++) {
+      var hold = new THREE.Group(); hold.position.set(x, y, z); hold.rotation.y = i * Math.PI * 2 / n + r() * 0.4;
+      var m = addMesh(frondGeo(len * (0.85 + r() * 0.3), wid, droop), mat, hold); m.rotation.x = tilt + (r() - 0.5) * 0.35;
+      parent.add(hold);
+    }
+  }
+  function palm(parent, x, z, h, lean, seed) {
+    var top = new THREE.Vector3(x + lean[0], GY + h, z + lean[1]);
+    var curve = new THREE.CatmullRomCurve3([new THREE.Vector3(x, GY, z), new THREE.Vector3(x + lean[0] * 0.15, GY + h * 0.4, z + lean[1] * 0.15), new THREE.Vector3(x + lean[0] * 0.55, GY + h * 0.75, z + lean[1] * 0.55), top]);
+    addMesh(new THREE.TubeGeometry(curve, 20, 0.42, 7, false), ME.palmTrunk, parent);
+    crown(parent, top.x, top.y, top.z, 11, 8.5, 1.3, 2.4, 1.15, ME.frond, seed);
+    for (var i = 0; i < 4; i++) { var c = addMesh(new THREE.SphereGeometry(0.38, 10, 8), ME.coconut, parent); c.position.set(top.x + Math.cos(i * 1.6) * 0.55, top.y - 0.6, top.z + Math.sin(i * 1.6) * 0.55); }
+  }
+  function banana(parent, x, z, h, seed) {
+    var st = addMesh(new THREE.CylinderGeometry(0.3, 0.42, h, 8), ME.bananaStem, parent); st.position.set(x, GY + h / 2, z);
+    crown(parent, x, GY + h, z, 7, 5.5, 1.9, 1.6, 0.55, ME.bananaLeaf, seed);
+  }
+  function betel(parent, x, z, h, seed) {
+    var t = addMesh(new THREE.CylinderGeometry(0.18, 0.24, h, 7), ME.betelTrunk, parent); t.position.set(x, GY + h / 2, z);
+    crown(parent, x, GY + h, z, 7, 5, 0.9, 1.6, 1.0, ME.frond, seed);
+  }
+  function broadleaf(parent, x, z, s, leafM, seed, fruit) {
+    var r = rng(seed), i;
+    var t = addMesh(new THREE.CylinderGeometry(0.55 * s, 0.85 * s, 8 * s, 9), M.trunk, parent); t.position.set(x, GY + 4 * s, z);
+    [[1, 0.6], [-1, 0.3], [0.2, -1]].forEach(function (b) {
+      var br = addMesh(new THREE.CylinderGeometry(0.25 * s, 0.4 * s, 5 * s, 7), M.trunk, parent);
+      br.position.set(x + b[0] * 1.2 * s, GY + 9 * s, z + b[1] * 1.2 * s); br.rotation.z = -b[0] * 0.5; br.rotation.x = b[1] * 0.5;
+    });
+    for (i = 0; i < 9; i++) {
+      var a = i / 9 * Math.PI * 2, rr = i === 0 ? 0 : 3.6 * s, c = addMesh(new THREE.IcosahedronGeometry((3 + r() * 1.8) * s, 1), leafM, parent);
+      c.position.set(x + Math.cos(a) * rr * (0.7 + r() * 0.3), GY + (11 + r() * 3 + (i === 0 ? 2.5 : 0)) * s, z + Math.sin(a) * rr * (0.7 + r() * 0.3));
+    }
+    if (fruit) for (i = 0; i < 4; i++) { var f = addMesh(new THREE.SphereGeometry(0.55 * s, 10, 8), ME.jackfruit, parent); f.scale.y = 1.5; f.position.set(x + Math.cos(i * 1.7) * 0.8 * s, GY + (3 + i * 1.2) * s, z + Math.sin(i * 1.7) * 0.8 * s); }
+  }
+  function bamboo(parent, x, z, seed) {
+    var r = rng(seed);
+    for (var i = 0; i < 16; i++) {
+      var a = r() * Math.PI * 2, d = r() * 2.2, h = 22 + r() * 10, lean = 0.08 + r() * 0.12;
+      var g = new THREE.CylinderGeometry(0.16, 0.2, h, 6); g.translate(0, h / 2, 0);
+      var m = addMesh(g, ME.bamboo, parent); m.position.set(x + Math.cos(a) * d, GY, z + Math.sin(a) * d);
+      m.rotation.z = -Math.cos(a) * lean; m.rotation.x = Math.sin(a) * lean;
+      for (var k = 0; k < 3; k++) {
+        var hh = h * (0.7 + k * 0.12), lf = addMesh(new THREE.IcosahedronGeometry(1.4 + r(), 0), ME.bambooLeaf, parent);
+        lf.position.set(x + Math.cos(a) * (d + hh * Math.sin(lean)), GY + hh * Math.cos(lean), z + Math.sin(a) * (d + hh * Math.sin(lean)));
+        lf.scale.set(1.3, 0.7, 1.3);
+      }
+    }
+  }
+
+  var gPalms = part("yard", "Coconut palms", "নারিকেল গাছ", "4 trees", "Coconut palms around the back and sides of the yard.", "উঠানের পেছনে ও পাশে নারিকেল গাছ।", yardG, { sizeBn: "৪টি গাছ" });
+  palm(gPalms, -12, -40, 30, [1.5, -2], 11); palm(gPalms, 24, -38, 28, [-2, -1.5], 12); palm(gPalms, 46, -8, 32, [2.5, 0], 13); palm(gPalms, -52, 8, 29, [-2, 1], 14);
+  var gMango = part("yard", "Mango tree", "আম গাছ", "big shade tree", "A big mango tree in the south-west corner shades the front yard in the afternoon.", "দক্ষিণ-পশ্চিম কোণে বড় আম গাছ বিকেলে সামনের উঠানে ছায়া দেয়।", yardG, { sizeBn: "বড় ছায়াদার গাছ" });
+  broadleaf(gMango, 46, 34, 1.25, ME.mangoLeaf, 21, false);
+  var gJack = part("yard", "Jackfruit tree", "কাঁঠাল গাছ", "with fruit", "Jackfruit tree in the north-east corner, with fruit hanging from the trunk.", "উত্তর-পূর্ব কোণে কাঁঠাল গাছ, কাণ্ডে কাঁঠাল ঝুলছে।", yardG, { sizeBn: "ফলসহ" });
+  broadleaf(gJack, -44, -30, 1.05, ME.jackLeaf, 22, true);
+  var gBanana = part("yard", "Banana plants", "কলা গাছ", "3 plants", "A clump of banana plants behind the house, next to the tubewell.", "বাড়ির পেছনে টিউবওয়েলের পাশে কলা গাছের ঝাড়।", yardG, { sizeBn: "৩টি গাছ" });
+  banana(gBanana, 16, -31, 5.5, 31); banana(gBanana, 19.5, -34, 4.8, 32); banana(gBanana, 13, -35, 5, 33);
+  var gBamboo = part("yard", "Bamboo clump", "বাঁশঝাড়", "16 culms", "A bamboo clump in the far north-east corner of the plot.", "জমির উত্তর-পূর্ব কোণে বাঁশঝাড়।", yardG, { sizeBn: "১৬টি বাঁশ" });
+  bamboo(gBamboo, -58, -44, 41);
+  var gBetel = part("yard", "Betel-nut palms", "সুপারি গাছ", "a row of 5", "A row of tall betel-nut palms along the south boundary.", "দক্ষিণের সীমানা বরাবর লম্বা সুপারি গাছের সারি।", yardG, { sizeBn: "৫টির সারি" });
+  [-30, -18, -6, 6, 18].forEach(function (z, i) { betel(gBetel, 56, z, 26 + (i % 2) * 3, 50 + i); });
+
+  var gPond = part("yard", "Pond", "পুকুর", "about 28' × 18'", "Village pond with lotus and lily pads in the front-left (north-west) yard. Keep it well away from the septic tank.", "উঠানের সামনে-বাঁয়ে (উত্তর-পশ্চিমে) শাপলা-পদ্মসহ পুকুর। সেপটিক ট্যাংক থেকে যথেষ্ট দূরে রাখুন।", yardG, { sizeBn: "প্রায় ২৮' × ১৮'" });
+  (function () {
+    var bank = addMesh(new THREE.RingGeometry(1, 1.16, 48), ME.bank, gPond, false); bank.rotation.x = -Math.PI / 2; bank.scale.set(14, 9, 1); bank.position.set(-42, GY + 0.025, 36);
+    var water = addMesh(new THREE.CircleGeometry(1, 48), ME.water, gPond, false); water.rotation.x = -Math.PI / 2; water.scale.set(14, 9, 1); water.position.set(-42, GY + 0.03, 36);
+    var r = rng(61);
+    for (var i = 0; i < 9; i++) {
+      var a = r() * Math.PI * 2, d = 0.25 + r() * 0.55, x = -42 + Math.cos(a) * d * 14, z = 36 + Math.sin(a) * d * 9;
+      var pad = addMesh(new THREE.CircleGeometry(0.7 + r() * 0.5, 20, 0.3, 5.9), ME.lilyPad, gPond, false); pad.rotation.x = -Math.PI / 2; pad.rotation.z = r() * 6.3; pad.position.set(x, GY + 0.06, z);
+      if (i % 3 === 0) {
+        var fl = addMesh(new THREE.ConeGeometry(0.34, 0.5, 8), ME.lotus, gPond); fl.rotation.x = Math.PI; fl.position.set(x + 0.2, GY + 0.35, z);
+        var cen = addMesh(new THREE.SphereGeometry(0.12, 8, 6), ME.pollen, gPond); cen.position.set(x + 0.2, GY + 0.62, z);
+      }
+    }
+  })();
+  var gTube = part("yard", "Tubewell", "টিউবওয়েল", "on a 5' × 5' platform", "Hand tubewell on a concrete platform in the back yard, near the kitchen. Keep it at least 30 ft from the septic tank.", "পেছনের উঠানে রান্নাঘরের কাছে পাকা প্ল্যাটফর্মে হাতকল টিউবওয়েল। সেপটিক ট্যাংক থেকে কমপক্ষে ৩০ ফুট দূরে রাখুন।", yardG, { sizeBn: "৫' × ৫' প্ল্যাটফর্মে" });
+  (function () {
+    var x = 6, z = -30;
+    addMesh(new THREE.BoxGeometry(5, 0.35, 5), ME.slab, gTube).position.set(x, GY + 0.175, z);
+    addMesh(new THREE.BoxGeometry(5.4, 0.5, 0.3), ME.slab, gTube).position.set(x, GY + 0.25, z + 2.6);
+    addMesh(new THREE.CylinderGeometry(0.13, 0.13, 2.2, 10), ME.pump, gTube).position.set(x, GY + 1.45, z);
+    addMesh(new THREE.CylinderGeometry(0.28, 0.24, 1.3, 12), ME.pump, gTube).position.set(x, GY + 3.2, z);
+    addMesh(new THREE.BoxGeometry(0.9, 0.18, 0.18), ME.pump, gTube).position.set(x + 0.55, GY + 2.9, z);
+    var handle = addMesh(new THREE.BoxGeometry(2.6, 0.12, 0.12), ME.pump, gTube); handle.position.set(x - 1.1, GY + 3.75, z); handle.rotation.z = 0.35;
+  })();
+  var gHay = part("yard", "Haystack", "খড়ের গাদা", "about 8' across", "Straw stack in the back yard for cattle feed and cooking fuel.", "গরুর খাবার আর জ্বালানির জন্য পেছনের উঠানে খড়ের গাদা।", yardG, { sizeBn: "প্রায় ৮' চওড়া" });
+  (function () {
+    var hay = new THREE.LatheGeometry([[0, 0], [5.2, 0], [5.6, 2.5], [5.2, 6], [3.8, 9], [1.8, 11.3], [0.4, 12.4], [0, 12.6]].map(function (q) { return new THREE.Vector2(q[0], q[1]); }), 18);
+    var stack = addMesh(hay, ME.straw, gHay); stack.position.set(-30, GY, -38); stack.scale.set(0.72, 0.72, 0.72);
+    addMesh(new THREE.CylinderGeometry(0.1, 0.1, 11, 6), M.trunk, gHay).position.set(-30, GY + 5.5, -38);
+  })();
+  var gPath = part("yard", "Brick path", "ইটের রাস্তা", "6' wide", "Bricks laid in a basket-weave pattern from the steps out to the yard, with a brick edging.", "সিঁড়ি থেকে উঠান পর্যন্ত ঝুড়ি-বুনন নকশায় বিছানো ইট, দুই পাশে ইটের কিনারা।", yardG, { sizeBn: "৬' চওড়া" });
+  B(gPath, 191.5, 514, 263.5, 874, -30, -29.6, ME.path, [32 * IN, 32 * IN]);
+  B(gPath, 187.5, 514, 191.5, 874, -30, -29.2, M.brick, BRICK_UV); B(gPath, 263.5, 514, 267.5, 874, -30, -29.2, M.brick, BRICK_UV);
+  var gBeds = part("yard", "Flower beds", "ফুলের বেড", "2 beds along the verandah", "Marigold, hibiscus, rose and jasmine in brick-edged beds along the verandah, and big hibiscus bushes at the front corners.", "বারান্দার সামনে ইটের কিনারা দেওয়া বেডে গাঁদা, জবা, গোলাপ ও বেলি ফুল, আর সামনের দুই কোণে বড় জবা গাছ।", yardG, { sizeBn: "বারান্দার সামনে ২টি বেড" });
+  (function () {
+    var fc = new Collector(), fr = rng(77), KIND = ["hib", "mari", "pink", "white"];
+    function shrub(x, z, rad, kind, base) {
+      var bush = new THREE.IcosahedronGeometry(rad * IN, 1); bush.scale(1, 0.8, 1); bush.translate(X(x), Y(base + rad * 0.8), Z(z)); fc.add("bush", bush);
+      for (var f = 0; f < Math.round(rad * 0.9); f++) {
+        var a = fr() * Math.PI * 2, e = fr() * 1.2, fx = x + Math.cos(a) * Math.cos(e) * rad * 0.95, fz = z + Math.sin(a) * Math.cos(e) * rad * 0.95, fy = base + rad * 0.8 + Math.sin(e) * rad * 0.8;
+        var fl = new THREE.SphereGeometry((kind === "mari" ? 1.6 : 1.9) * IN, 8, 6); fl.translate(X(fx), Y(fy), Z(fz)); fc.add(kind, fl);
+      }
+    }
+    [[12, 160], [295, 443]].forEach(function (bd) {
+      B(gBeds, bd[0], 478, bd[1], 498, -30, -28.6, ME.soil);
+      B(gBeds, bd[0] - 2, 476, bd[1] + 2, 478, -30, -27.8, M.brick, BRICK_UV); B(gBeds, bd[0] - 2, 498, bd[1] + 2, 500, -30, -27.8, M.brick, BRICK_UV);
+      B(gBeds, bd[0] - 2, 478, bd[0], 498, -30, -27.8, M.brick, BRICK_UV); B(gBeds, bd[1], 478, bd[1] + 2, 498, -30, -27.8, M.brick, BRICK_UV);
+      for (var x = bd[0] + 9; x < bd[1] - 4; x += 15) shrub(x, 488 + (fr() - 0.5) * 4, 7 + fr() * 3, KIND[Math.floor(fr() * 4)], -28.6);
+    });
+    shrub(-30, 492, 18, "hib", -30); shrub(485, 492, 18, "hib", -30);
+    fc.flush(gBeds, { bush: ME.bush, hib: ME.hib, mari: ME.mari, pink: ME.pink, white: ME.white });
+  })();
+
+  /* grass tufts and wild flowers (not clickable) */
+  (function () {
+    var blade = new THREE.ConeGeometry(0.09, 0.8, 3); blade.translate(0, 0.4, 0);
+    var tuft = (BGU && BGU.mergeBufferGeometries) ? BGU.mergeBufferGeometries([blade.clone().rotateZ(0.25).translate(0.08, 0, 0), blade.clone(), blade.clone().rotateZ(-0.3).translate(-0.08, 0, 0.05), blade.clone().rotateX(0.3).translate(0, 0, 0.1)], false) : blade;
+    var N = 2600, grass = new THREE.InstancedMesh(tuft, ME.blade, N), flow = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 6, 4), ME.blade, 420);
+    var r = rng(99), dm = new THREE.Object3D(), col = new THREE.Color(), n = 0, nf = 0, tries = 0;
+    function freeSpot() {
+      for (var k = 0; k < 20; k++) {
+        var a = r() * Math.PI * 2, d = 41 + Math.pow(r(), 0.7) * 85, x = Math.cos(a) * d, z = 2 + Math.sin(a) * d;
+        if (((x + 42) / 16) * ((x + 42) / 16) + ((z - 36) / 11) * ((z - 36) / 11) < 1) continue;
+        if (Math.abs(x) < 4.5 && z > 18 && z < 56) continue;
+        return [x, z];
+      }
+      return null;
+    }
+    while (n < N && tries < N * 2) {
+      tries++;
+      var sp = freeSpot(); if (!sp) continue;
+      dm.position.set(sp[0], GY, sp[1]); dm.rotation.set(0, r() * 6.28, 0);
+      var sc = 0.7 + r() * 0.9; dm.scale.set(sc, sc * (0.8 + r() * 0.6), sc); dm.updateMatrix();
+      grass.setMatrixAt(n, dm.matrix); col.setHSL(0.22 + r() * 0.06, 0.45 + r() * 0.2, 0.26 + r() * 0.12); grass.setColorAt(n, col); n++;
+    }
+    var FC = [0xf2d04a, 0xffffff, 0xb58ad6, 0xf29a3a];
+    while (nf < 420) {
+      var fp = freeSpot(); if (!fp) break;
+      dm.position.set(fp[0], GY + 0.45, fp[1]); dm.rotation.set(0, 0, 0); dm.scale.set(1, 1, 1); dm.updateMatrix();
+      flow.setMatrixAt(nf, dm.matrix); col.setHex(FC[nf % 4]); flow.setColorAt(nf, col); nf++;
+    }
+    grass.count = n; flow.count = nf;
+    grass.receiveShadow = true; flow.receiveShadow = true;
+    scene.add(grass); scene.add(flow);
+  })();
+
+  /* sky dome, clouds and the moving sun */
+  var skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false,
+    uniforms: { top: { value: new THREE.Color(0.5, 0.7, 0.87) }, bottom: { value: new THREE.Color(0.91, 0.94, 0.92) }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: new THREE.Color(1, 0.93, 0.78) } },
+    vertexShader: "varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vD; void main(){ float h = clamp(vD.y, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.55)); float s = max(dot(normalize(vD), normalize(sunDir)), 0.0); c += sunCol * (pow(s, 900.0) * 1.8 + pow(s, 16.0) * 0.22); gl_FragColor = vec4(c, 1.0); }"
+  });
+  var skyDome = new THREE.Mesh(new THREE.SphereGeometry(420, 32, 16), skyMat); skyDome.renderOrder = -1; scene.add(skyDome);
+  (function () {
+    var r = rng(5);
+    for (var i = 0; i < 7; i++) {
+      var a = r() * Math.PI * 2, d = 170 + r() * 110, cx = Math.cos(a) * d, cz = Math.sin(a) * d, cy = 70 + r() * 45;
+      for (var k = 0; k < 6; k++) { var c = addMesh(new THREE.IcosahedronGeometry(9 + r() * 8, 1), ME.cloud, scene, false); c.receiveShadow = false; c.position.set(cx + (k - 2.5) * 9 + r() * 5, cy + r() * 5, cz + r() * 8); c.scale.y = 0.55; }
+    }
+  })();
+  var LAT = 24 * Math.PI / 180, sunState = { t: 15.5 };
+  function updateSun(t) {
+    sunState.t = t;
+    var h = (t - 12) * 15 * Math.PI / 180;
+    var dir = new THREE.Vector3(Math.sin(LAT) * Math.cos(h), Math.cos(LAT) * Math.cos(h), Math.sin(h)).normalize();
+    var el = Math.max(Math.asin(Math.max(dir.y, 0)), 0.03), warm = 1 - Math.min(1, el / 0.6);
+    if (dir.y < 0.03) { dir.y = 0.03; dir.normalize(); }
+    sun.position.copy(dir).multiplyScalar(90);
+    sun.color.setRGB(1, 0.95 - 0.25 * warm, 0.86 - 0.45 * warm);
+    sun.intensity = 0.25 + 0.8 * Math.min(1, Math.sin(el) * 1.6);
+    hemi.intensity = 0.35 + 0.3 * Math.min(1, Math.sin(el) * 2);
+    skyMat.uniforms.sunDir.value.copy(dir);
+    skyMat.uniforms.top.value.setRGB(0.5 - 0.1 * warm, 0.7 - 0.18 * warm, 0.87 - 0.22 * warm);
+    skyMat.uniforms.bottom.value.setRGB(0.91 + 0.07 * warm, 0.94 - 0.1 * warm, 0.92 - 0.26 * warm);
+    scene.fog.color.copy(skyMat.uniforms.bottom.value).convertSRGBToLinear();
+    M.lamp.emissiveIntensity = t >= 17.25 ? 2.2 : 0.9;
+    timeLabel();
+  }
+  function timeLabel() {
+    var t = sunState.t, hh = Math.floor(t), mm = Math.round((t - hh) * 60), h12 = ((hh + 11) % 12) + 1, mmT = (mm < 10 ? "0" : "") + mm;
+    var part_ = t < 12 ? "সকাল" : t < 15 ? "দুপুর" : t < 17.75 ? "বিকেল" : "সন্ধ্যা";
+    $("t-time").textContent = T(h12 + ":" + mmT + " " + (hh >= 12 ? "PM" : "AM"), part_ + " " + bnNum(h12 + ":" + mmT));
+  }
+  function cutLabel() { $("t-cuth").textContent = lang === "bn" ? bnNum(CUT_FT) + " ফুট" : CUT_FT + " ft"; }
+
+
+  /* collect pickable meshes */
+  var pickables = [];
+  parts.forEach(function (p) { p.group.traverse(function (o) { if (o.isMesh) { o.userData.part = p; pickables.push(o); } }); });
+
+
+  /* =====================================================================
+     KHALID'S TREASURE HUNT
+     Everything above builds the house (same code as the 3D model page).
+     ===================================================================== */
+  function timeLabel() {}
+  function cutLabel() {}
+  var $ = function (id) { return document.getElementById(id); };
+  var touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  var inApp = !!window.RafiApp;   // true inside the Android app
+  controls.enabled = false;
+  var maxPR = Math.min(window.devicePixelRatio || 1, touch ? 1.25 : 1.5), curPR = maxPR;
+  renderer.setPixelRatio(curPR);
+  if (touch) {
+    // phones: lighter shadows and half the grass
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    sun.shadow.mapSize.set(1024, 1024);
+    scene.traverse(function (o) { if (o.isInstancedMesh) o.count = Math.floor(o.count * 0.5); });
+  }
+  camera.fov = 52; camera.near = 0.2; camera.updateProjectionMatrix();
+  doorPivots.forEach(function (pv) { pv.rotation.y = pv.userData.openA; });
+  updateSun(16);
+  clipArr.length = 0;
+  cutPlane.constant = 4.6;
+
+  /* ---------- text in both languages ---------- */
+  var U = {
+    en: {
+      title: "Khalid's Treasure Hunt",
+      story: "Khalid and his dog Bhulu have just moved into the new brick house, and Khalid's favourite things are scattered all over the rooms, the verandah and the yard. Help him find each one. The faster you find it, the more points you get. Pick the wrong thing and Bhulu barks!",
+      score: "Each find is worth 100–200 points, plus up to 135 for speed. A hint shows where to look but costs 40.",
+      keys: "Walk: W A S D or arrow keys · Shift: walk slowly · Turn: Q / E or drag · Click a thing to pick it up · Hint: H · Pause: Esc",
+      touch: "Joystick to walk (push further to run) · drag to turn · tap a thing to pick it up · bulb for a hint",
+      rotate: "Turn your phone sideways for a bigger view.",
+      start: "Start the hunt", best: "Best score: {b}", credit: "House designed by Md. Khalid Hasan Milu",
+      lScore: "Score", lFind: "Find", lItem: "Item",
+      found: "Found the {i}! +{p}", speedy: " Speedy!", closer: "Walk closer to pick it up!", woof: "Woof! Woof!",
+      look: "Look in: {p}", hintToast: "Look in: {p} (−40)", sparkle: "Look for the sparkle!",
+      paused: "Paused", resume: "Resume", restart: "Start over",
+      doneTitle: "All found!", doneText: "Khalid found all {n} things in {t}.", doneScore: "Score {s} · Best {b}", newBest: "New best score!", again: "Play again",
+      pts: "pts", langBtn: "বাং", full: "Full screen"
+    },
+    bn: {
+      title: "খালিদের গুপ্তধন খোঁজা",
+      story: "খালিদ আর ওর কুকুর ভুলু নতুন ইটের বাড়িতে উঠেছে, আর খালিদের প্রিয় জিনিসগুলো ঘরে, বারান্দায় আর উঠানে ছড়িয়ে আছে। একটা একটা করে খুঁজে দাও। যত তাড়াতাড়ি পাবে, তত বেশি পয়েন্ট। ভুল জিনিস ধরলে ভুলু ঘেউ ঘেউ করবে!",
+      score: "প্রতিটি জিনিসে ১০০–২০০ পয়েন্ট, আর দ্রুততার জন্য ১৩৫ পর্যন্ত বোনাস। সাহায্য নিলে জায়গা দেখাবে, তবে ৪০ পয়েন্ট কাটবে।",
+      keys: "হাঁটো: W A S D বা তীর চিহ্ন · Shift: আস্তে হাঁটো · ঘোরাও: Q / E বা টেনে · জিনিসে ক্লিক করে তোলো · সাহায্য: H · বিরতি: Esc",
+      touch: "জয়স্টিকে হাঁটো (বেশি ঠেললে দৌড়) · টেনে ঘোরাও · জিনিস ছুঁয়ে তোলো · সাহায্যের জন্য বাতি",
+      rotate: "বড় করে দেখতে ফোনটা আড়াআড়ি ধরো।",
+      start: "খোঁজা শুরু করো", best: "সেরা স্কোর: {b}", credit: "বাড়ির নকশা: মোঃ খালিদ হাসান মিলু",
+      lScore: "স্কোর", lFind: "খুঁজে বের করো", lItem: "জিনিস",
+      found: "{i} পাওয়া গেছে! +{p}", speedy: " দারুণ দ্রুত!", closer: "আরও কাছে গিয়ে তোলো!", woof: "ঘেউ ঘেউ!",
+      look: "খুঁজে দেখো: {p}", hintToast: "খুঁজে দেখো: {p} (−৪০)", sparkle: "ঝিলিক দেখে খোঁজো!",
+      paused: "বিরতি", resume: "আবার চালাও", restart: "নতুন করে শুরু",
+      doneTitle: "সব পাওয়া গেছে!", doneText: "খালিদ {t}-এ সব {n}টি জিনিস খুঁজে পেয়েছে।", doneScore: "স্কোর {s} · সেরা {b}", newBest: "নতুন সেরা স্কোর!", again: "আবার খেলো",
+      pts: "পয়েন্ট", langBtn: "EN", full: "পুরো পর্দা"
+    }
+  };
+  function u(k, vars) {
+    var s = U[lang][k];
+    if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(vars[v]); });
+    return s;
+  }
+  function num(n) { return lang === "bn" ? bnNum(n) : String(n); }
+  function fmtTime(sec) { var m = Math.floor(sec / 60), s = Math.floor(sec % 60); return num(m + ":" + (s < 10 ? "0" : "") + s); }
+
+  /* ---------- where Khalid can walk (plan inches) ---------- */
+  function floorAt(x, z) {
+    if (x >= 0 && x <= 455 && z >= 0 && z <= 426) return 0;
+    if (x >= 0 && x <= 455 && z > 426 && z <= 474) return -2;
+    if (x >= 191.5 && x <= 263.5 && z > 474 && z <= 514) return -2 - (z - 474) / 40 * 28;
+    return -30;
+  }
+  var RECTS = [];
+  WALLS.forEach(function (w) {
+    var x1 = w[0], z1 = w[1], x2 = w[2], z2 = w[3], horiz = (x2 - x1) >= (z2 - z1);
+    var gaps = OPEN.filter(function (o) {
+      return o.sill === 0 && (horiz ? (o.o === "h" && o.w1 >= z1 - 0.5 && o.w2 <= z2 + 0.5 && o.s >= x1 - 0.5 && o.e <= x2 + 0.5)
+                                    : (o.o === "v" && o.w1 >= x1 - 0.5 && o.w2 <= x2 + 0.5 && o.s >= z1 - 0.5 && o.e <= z2 + 0.5));
+    }).sort(function (a, b) { return a.s - b.s; });
+    var cur = horiz ? x1 : z1, end = horiz ? x2 : z2;
+    gaps.forEach(function (o) { if (o.s > cur) RECTS.push(horiz ? [cur, z1, o.s, z2] : [x1, cur, x2, o.s]); cur = o.e; });
+    if (end > cur) RECTS.push(horiz ? [cur, z1, end, z2] : [x1, cur, x2, end]);
+  });
+  [
+    [70, 30, 154, 102], [136, 12, 154, 30], [136, 102, 154, 120], [10, 120, 32, 162], [80, 160, 116, 178],
+    [301, 30, 385, 102], [301, 12, 319, 30], [301, 102, 319, 120], [423, 120, 445, 162], [339, 160, 375, 178],
+    [70, 312, 154, 372], [136, 294, 154, 312], [136, 372, 154, 390], [92, 398, 134, 416], [20, 392, 56, 416], [29, 374, 47, 390],
+    [301, 312, 385, 372], [301, 294, 319, 312], [301, 372, 319, 390], [397, 248, 439, 270], [399, 392, 435, 416], [408, 374, 426, 390],
+    [159, 10, 243, 34], [219, 34, 243, 90], [161, 100, 189, 128], [159, 50, 175, 96],
+    [271, 16, 296, 32], [10, 220, 35, 236], [420, 220, 445, 236], [280, 110, 296, 130], [252, 45, 262, 55], [45, 191, 55, 201], [400, 191, 410, 201],
+    [197.5, 225, 257.5, 261], [205, 207, 223, 223], [232, 207, 250, 223], [205, 263, 223, 279], [232, 263, 250, 279], [179, 234, 195, 252], [259.5, 234, 275.5, 252],
+    [159, 330, 191, 408], [270, 334, 296, 360], [270, 366, 296, 392], [209, 350, 245, 372], [161, 312, 173, 324], [162, 288, 174, 300],
+    [24, 427, 90, 446], [375, 434, 391, 450], [402, 439, 418, 455],
+    [10, 466.5, 151, 471.5], [161, 466.5, 183.5, 471.5], [271.5, 466.5, 294, 471.5], [304, 466.5, 445, 471.5],
+    [183.5, 465, 191.5, 473], [263.5, 465, 271.5, 473], [-3, 461, 13, 477], [148, 461, 164, 477], [291, 461, 307, 477], [442, 461, 458, 477],
+    [10, 476, 162, 500], [293, 476, 445, 500], [167.5, 477.5, 184.5, 494.5], [270.5, 477.5, 287.5, 494.5], [167.5, 495.5, 184.5, 512.5], [270.5, 495.5, 287.5, 512.5]
+  ].forEach(function (r) { RECTS.push(r); });
+  function px(v) { return v * 12 + OX; }
+  function pz(v) { return v * 12 + OZ; }
+  var CIRCLES = [
+    [px(-12), pz(-40), 8], [px(24), pz(-38), 8], [px(46), pz(-8), 8], [px(-52), pz(8), 8],
+    [px(46), pz(34), 14], [px(-44), pz(-30), 12], [px(16), pz(-31), 6], [px(19.5), pz(-34), 6], [px(13), pz(-35), 6],
+    [px(-58), pz(-44), 36], [px(-30), pz(-38), 50], [px(6), pz(-30), 6], [-30, 492, 20], [485, 492, 20]
+  ];
+  [-30, -18, -6, 6, 18].forEach(function (z) { CIRCLES.push([px(56), pz(z), 4]); });
+  var POND = [px(-42), pz(36), 15 * 12, 10 * 12], PR = 9;
+  function collide(p) {
+    for (var it = 0; it < 3; it++) {
+      RECTS.forEach(function (r) {
+        var cx = Math.max(r[0], Math.min(p.x, r[2])), cz = Math.max(r[1], Math.min(p.z, r[3])), dx = p.x - cx, dz = p.z - cz, d2 = dx * dx + dz * dz;
+        if (d2 >= PR * PR) return;
+        if (d2 > 1e-6) { var d = Math.sqrt(d2), k = (PR - d) / d; p.x += dx * k; p.z += dz * k; return; }
+        var l = p.x - r[0], rr = r[2] - p.x, t = p.z - r[1], b = r[3] - p.z, m = Math.min(l, rr, t, b);
+        if (m === l) p.x = r[0] - PR; else if (m === rr) p.x = r[2] + PR; else if (m === t) p.z = r[1] - PR; else p.z = r[3] + PR;
+      });
+      CIRCLES.forEach(function (c) {
+        var dx = p.x - c[0], dz = p.z - c[1], d = Math.sqrt(dx * dx + dz * dz), m = c[2] + PR;
+        if (d < m && d > 1e-6) { p.x = c[0] + dx / d * m; p.z = c[1] + dz / d * m; }
+      });
+      var ex = (p.x - POND[0]) / (POND[2] + PR), ez = (p.z - POND[1]) / (POND[3] + PR), e = Math.sqrt(ex * ex + ez * ez);
+      if (e < 1 && e > 1e-6) { p.x = POND[0] + ex / e * (POND[2] + PR); p.z = POND[1] + ez / e * (POND[3] + PR); }
+      var wx = (p.x - OX) / 12, wz = (p.z - OZ) / 12, wd = Math.sqrt(wx * wx + wz * wz);
+      if (wd > 60) { p.x = OX + wx / wd * 720; p.z = OZ + wz / wd * 720; }
+    }
+  }
+  // which room a point is in ("yard" outside); 3" of slack so doorways count
+  function roomAt(x, z) {
+    for (var i = 0; i < ROOMS.length; i++) {
+      var rs = ROOMS[i].r;
+      for (var j = 0; j < rs.length; j++) { var r = rs[j]; if (x >= r[0] - 3 && x <= r[2] + 3 && z >= r[1] - 3 && z <= r[3] + 3) return ROOMS[i].k; }
+    }
+    return "yard";
+  }
+  // true when a straight line between two points misses every wall and piece of furniture
+  function clearLine(ax, az, bx, bz) {
+    var dx = bx - ax, dz = bz - az;
+    for (var i = 0; i < RECTS.length; i++) {
+      var r = RECTS[i], t0 = 0, t1 = 1, p = [-dx, dx, -dz, dz], q = [ax - r[0], r[2] - ax, az - r[1], r[3] - az], hit = true;
+      for (var k = 0; k < 4 && hit; k++) {
+        if (p[k] === 0) { if (q[k] < 0) hit = false; }
+        else { var t = q[k] / p[k]; if (p[k] < 0) { if (t > t1) hit = false; else if (t > t0) t0 = t; } else { if (t < t0) hit = false; else if (t < t1) t1 = t; } }
+      }
+      if (hit) return false;
+    }
+    return true;
+  }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function mix(a, b, w) { return a + (b - a) * w; }
+  function turnTo(o, target, k) {
+    var d = target - o.face;
+    while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+    o.face += d * Math.min(1, k);
+  }
+
+  /* ---------- the hidden things ---------- */
+  function im(hex, o) {
+    var m = new THREE.MeshStandardMaterial(Object.assign({ color: hex, roughness: 0.6 }, o || {}));
+    m.color.convertSRGBToLinear();
+    return m;
+  }
+  var IMT = {
+    red: im(0xd9362b), redD: im(0xd9362b, { side: THREE.DoubleSide }), yellow: im(0xf2c230), yellowD: im(0xf2c230, { side: THREE.DoubleSide }),
+    blue: im(0x2e62b8), green: im(0x3c9a4a), white: im(0xf7f5ee), black: im(0x1e1e1e, { roughness: 0.4 }),
+    gold: im(0xe0b040, { metalness: 0.85, roughness: 0.3 }), bamboo: im(0xc9ad62), paper: im(0xfbfaf4, { roughness: 0.9 }),
+    clay: im(0xb65a2e, { roughness: 0.9 }), cane: im(0xc9a15e, { roughness: 0.9, side: THREE.DoubleSide }), orange: im(0xf0a02a), leaf: im(0x3f8a3a),
+    brown: im(0x6b4a2e), lens: im(0xbfe0f2, { transparent: true, opacity: 0.6, side: THREE.DoubleSide }), lightBlue: im(0xbfe0f2),
+    glassWarm: im(0xffe7a8, { emissive: 0xffb84a, emissiveIntensity: 0.9, transparent: true, opacity: 0.88 }),
+    marble: [0xe0413a, 0x2f7fd0, 0x3fae5a, 0xf2c230].map(function (c) { return im(c, { roughness: 0.1, metalness: 0.1 }); }),
+    face: im(0xfbf7ee), egg: im(0xf3e6cf), ring: im(0xffd25a, { emissive: 0xffc23a, emissiveIntensity: 1 }),
+    steel: im(0xcfd4da, { metalness: 0.55, roughness: 0.3 }), willow: im(0xe3c48a, { roughness: 0.7 }),
+    teddy: im(0xa8743f, { roughness: 1 }), teddyL: im(0xe8c89a, { roughness: 1 }), pink: im(0xf08cb4, { roughness: 0.5 }),
+    bubble: im(0xe6f6ff, { transparent: true, opacity: 0.45, roughness: 0.05 }), plastic: im(0x7fc4ec, { transparent: true, opacity: 0.78, roughness: 0.15 }),
+    woodRed: im(0x8a3a22, { roughness: 0.6 }), drumSkin: im(0xeadcc0, { roughness: 0.9 }), gourd: im(0xb8742e, { roughness: 0.6 }),
+    blueD: im(0x2e62b8, { side: THREE.DoubleSide }), greenD: im(0x3c9a4a, { side: THREE.DoubleSide }),
+    pad: im(0x3f8f3a, { side: THREE.DoubleSide, roughness: 0.7 }), petal: im(0xfdf6f0, { roughness: 0.6 }), petalPink: im(0xf2a7c3, { roughness: 0.6 }),
+    parrot: im(0x3fbf3f, { roughness: 0.6 }), parrotD: im(0x2c8f3a, { roughness: 0.6 }), teal: im(0x23a3a0),
+    woodY: im(0x9a6a3a, { roughness: 0.8 }), leather: im(0x7a4a2a), coco: im(0x5f9a2e, { roughness: 0.7 }), coco2: im(0x86b03e, { roughness: 0.7 }),
+    thread: im(0xf0508a, { roughness: 0.8 })
+  };
+  function mm(geo, mat, parent, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; }
+  function V2(a) { return a.map(function (q) { return new THREE.Vector2(q[0], q[1]); }); }
+  function mkKite() {
+    var g = new THREE.Group(), k = new THREE.Group(), a = new THREE.Shape(), b = new THREE.Shape();
+    a.moveTo(0, 1.1); a.lineTo(-0.75, 0.3); a.lineTo(0, -0.8); a.lineTo(0, 1.1);
+    b.moveTo(0, 1.1); b.lineTo(0, -0.8); b.lineTo(0.75, 0.3); b.lineTo(0, 1.1);
+    mm(new THREE.ShapeGeometry(a), IMT.redD, k); mm(new THREE.ShapeGeometry(b), IMT.yellowD, k);
+    mm(new THREE.BoxGeometry(0.03, 1.9, 0.03), IMT.bamboo, k, 0, 0.15, 0.02); mm(new THREE.BoxGeometry(1.5, 0.03, 0.03), IMT.bamboo, k, 0, 0.3, 0.02);
+    for (var i = 0; i < 4; i++) mm(new THREE.BoxGeometry(0.18, 0.09, 0.02), i % 2 ? IMT.yellowD : IMT.redD, k, Math.sin(i * 1.3) * 0.12, -0.95 - i * 0.26, 0);
+    k.position.y = 1.9; k.rotation.x = -0.2; g.add(k); return g;
+  }
+  function mkTop() {
+    var g = new THREE.Group(), s = new THREE.Group();
+    mm(new THREE.LatheGeometry(V2([[0, 0], [0.05, 0.02], [0.32, 0.32], [0.36, 0.42], [0.28, 0.52], [0.07, 0.56], [0.05, 0.72], [0, 0.74]]), 20), IMT.red, s);
+    mm(new THREE.TorusGeometry(0.345, 0.03, 8, 24), IMT.yellow, s, 0, 0.4, 0).rotation.x = Math.PI / 2;
+    mm(new THREE.TorusGeometry(0.2, 0.025, 8, 24), IMT.green, s, 0, 0.53, 0).rotation.x = Math.PI / 2;
+    g.add(s); g.userData.spin = s; g.userData.spinRate = 9; return g;
+  }
+  function mkBook() {
+    var g = new THREE.Group();
+    mm(new THREE.BoxGeometry(0.95, 0.14, 0.7), IMT.blue, g, 0, 0.07, 0);
+    mm(new THREE.BoxGeometry(0.9, 0.1, 0.64), IMT.white, g, 0.03, 0.08, 0);
+    mm(new THREE.BoxGeometry(0.2, 0.145, 0.7), IMT.yellow, g, -0.3, 0.075, 0);
+    mm(new THREE.BoxGeometry(0.85, 0.12, 0.62), IMT.red, g, 0.05, 0.2, 0.02).rotation.y = 0.35;
+    g.rotation.y = 0.4; return g;
+  }
+  function mkBag() {
+    var g = new THREE.Group();
+    mm(new THREE.BoxGeometry(0.85, 1.05, 0.42), IMT.blue, g, 0, 0.53, 0);
+    mm(new THREE.BoxGeometry(0.6, 0.42, 0.14), IMT.yellow, g, 0, 0.35, 0.26);
+    mm(new THREE.TorusGeometry(0.16, 0.035, 8, 20, Math.PI), IMT.black, g, 0, 1.05, 0);
+    mm(new THREE.BoxGeometry(0.1, 0.9, 0.05), IMT.black, g, -0.25, 0.55, -0.24); mm(new THREE.BoxGeometry(0.1, 0.9, 0.05), IMT.black, g, 0.25, 0.55, -0.24);
+    return g;
+  }
+  function mkLantern() {
+    var g = new THREE.Group();
+    mm(new THREE.CylinderGeometry(0.3, 0.34, 0.14, 20), IMT.red, g, 0, 0.07, 0);
+    mm(new THREE.SphereGeometry(0.24, 20, 14), IMT.glassWarm, g, 0, 0.42, 0).scale.y = 1.25;
+    mm(new THREE.CylinderGeometry(0.06, 0.3, 0.18, 20), IMT.red, g, 0, 0.78, 0);
+    mm(new THREE.TorusGeometry(0.26, 0.02, 6, 24, Math.PI), IMT.black, g, 0, 0.86, 0);
+    [-0.29, 0.29].forEach(function (x) { mm(new THREE.BoxGeometry(0.03, 0.62, 0.03), IMT.black, g, x, 0.46, 0); });
+    return g;
+  }
+  function mkDuck() {
+    var g = new THREE.Group();
+    mm(new THREE.SphereGeometry(0.34, 20, 14), IMT.yellow, g, 0, 0.3, 0).scale.set(1, 0.85, 1.3);
+    mm(new THREE.SphereGeometry(0.22, 20, 14), IMT.yellow, g, 0, 0.66, 0.26);
+    mm(new THREE.ConeGeometry(0.08, 0.2, 12), IMT.orange, g, 0, 0.64, 0.52).rotation.x = Math.PI / 2;
+    [-0.09, 0.09].forEach(function (x) { mm(new THREE.SphereGeometry(0.035, 8, 6), IMT.black, g, x, 0.73, 0.44); });
+    g.rotation.y = -0.7; return g;
+  }
+  function mkKey() {
+    var g = new THREE.Group(), k = new THREE.Group();
+    mm(new THREE.TorusGeometry(0.2, 0.06, 10, 24), IMT.gold, k, -0.45, 0, 0);
+    mm(new THREE.BoxGeometry(0.75, 0.08, 0.08), IMT.gold, k, 0.1, 0, 0);
+    mm(new THREE.BoxGeometry(0.08, 0.2, 0.08), IMT.gold, k, 0.38, -0.12, 0); mm(new THREE.BoxGeometry(0.08, 0.14, 0.08), IMT.gold, k, 0.24, -0.09, 0);
+    k.position.y = 0.45; k.rotation.z = 0.2; g.add(k); g.userData.spin = k; g.userData.spinRate = 1.2; return g;
+  }
+  function mkWatch() {
+    var g = new THREE.Group(), w = new THREE.Group();
+    mm(new THREE.TorusGeometry(0.22, 0.06, 10, 28), IMT.brown, w);
+    mm(new THREE.CylinderGeometry(0.15, 0.15, 0.06, 24), IMT.gold, w, 0, 0.26, 0).rotation.x = Math.PI / 2;
+    mm(new THREE.CylinderGeometry(0.12, 0.12, 0.065, 24), IMT.face, w, 0, 0.26, 0.005).rotation.x = Math.PI / 2;
+    w.position.y = 0.32; g.add(w); g.userData.spin = w; g.userData.spinRate = 1.2; return g;
+  }
+  function mkMarbles() {
+    var g = new THREE.Group();
+    [[0, 0], [0.3, 0.1], [-0.2, 0.25], [0.12, -0.28]].forEach(function (q, i) { mm(new THREE.SphereGeometry(0.13, 16, 12), IMT.marble[i], g, q[0], 0.13, q[1]); });
+    return g;
+  }
+  function mkCar() {
+    var g = new THREE.Group();
+    mm(new THREE.BoxGeometry(1.0, 0.26, 0.5), IMT.red, g, 0, 0.26, 0);
+    mm(new THREE.BoxGeometry(0.55, 0.24, 0.46), IMT.lightBlue, g, -0.05, 0.5, 0);
+    [[-0.32, 0.26], [0.32, 0.26], [-0.32, -0.26], [0.32, -0.26]].forEach(function (q) { mm(new THREE.CylinderGeometry(0.13, 0.13, 0.08, 16), IMT.black, g, q[0], 0.13, q[1]).rotation.x = Math.PI / 2; });
+    g.rotation.y = -0.6; return g;
+  }
+  function mkGlasses() {
+    var g = new THREE.Group();
+    [-0.19, 0.19].forEach(function (x) { mm(new THREE.TorusGeometry(0.14, 0.025, 8, 24), IMT.black, g, x, 0.15, 0); mm(new THREE.CircleGeometry(0.13, 20), IMT.lens, g, x, 0.15, 0.001); });
+    mm(new THREE.BoxGeometry(0.1, 0.03, 0.03), IMT.black, g, 0, 0.2, 0);
+    [-0.33, 0.33].forEach(function (x) { mm(new THREE.BoxGeometry(0.03, 0.03, 0.5), IMT.black, g, x, 0.17, -0.25); });
+    g.rotation.y = 0.5; return g;
+  }
+  function mkBall() {
+    var g = new THREE.Group(), b = new THREE.Group();
+    mm(new THREE.SphereGeometry(0.24, 20, 14), IMT.red, b);
+    mm(new THREE.TorusGeometry(0.242, 0.014, 6, 32), IMT.white, b);
+    b.position.y = 0.24; g.add(b); g.userData.spin = b; g.userData.spinRate = 1.5; return g;
+  }
+  function mkFootball() {
+    var g = new THREE.Group(), b = new THREE.Group();
+    var ico = new THREE.IcosahedronGeometry(0.45, 1);
+    mm(ico, IMT.white, b);
+    b.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.455, 0)), new THREE.LineBasicMaterial({ color: 0x1e1e1e })));
+    b.position.y = 0.45; g.add(b); g.userData.spin = b; g.userData.spinRate = 0.8; return g;
+  }
+  function mkFlute() {
+    var g = new THREE.Group();
+    mm(new THREE.CylinderGeometry(0.055, 0.055, 1.5, 12), IMT.bamboo, g, 0, 0.06, 0).rotation.z = Math.PI / 2;
+    for (var i = 0; i < 6; i++) mm(new THREE.CylinderGeometry(0.018, 0.018, 0.02, 8), IMT.black, g, -0.3 + i * 0.12, 0.115, 0);
+    [-0.6, 0.62].forEach(function (x) { mm(new THREE.CylinderGeometry(0.062, 0.062, 0.05, 12), IMT.red, g, x, 0.06, 0).rotation.z = Math.PI / 2; });
+    g.rotation.y = 0.3; return g;
+  }
+  function mkBoat() {
+    var g = new THREE.Group(), hull = new THREE.Shape(), sail = new THREE.Shape();
+    hull.moveTo(-0.7, 0.28); hull.lineTo(0.7, 0.28); hull.lineTo(0.42, 0); hull.lineTo(-0.42, 0); hull.lineTo(-0.7, 0.28);
+    var hg = new THREE.ExtrudeGeometry(hull, { depth: 0.36, bevelEnabled: false }); hg.translate(0, 0, -0.18); mm(hg, IMT.paper, g);
+    sail.moveTo(-0.32, 0.28); sail.lineTo(0.32, 0.28); sail.lineTo(0, 0.78); sail.lineTo(-0.32, 0.28);
+    var sg2 = new THREE.ExtrudeGeometry(sail, { depth: 0.03, bevelEnabled: false }); sg2.translate(0, 0, -0.015); mm(sg2, IMT.paper, g);
+    g.rotation.y = 0.8; return g;
+  }
+  function mkPot() {
+    var g = new THREE.Group();
+    mm(new THREE.LatheGeometry(V2([[0, 0], [0.22, 0], [0.42, 0.22], [0.48, 0.45], [0.4, 0.7], [0.2, 0.84], [0.15, 0.95], [0.21, 1.02], [0.19, 1.06], [0.12, 1.0], [0, 1.0]]), 24), IMT.clay, g);
+    mm(new THREE.TorusGeometry(0.47, 0.02, 6, 32), IMT.yellow, g, 0, 0.45, 0).rotation.x = Math.PI / 2;
+    return g;
+  }
+  function mkEggs() {
+    var g = new THREE.Group();
+    mm(new THREE.CylinderGeometry(0.5, 0.34, 0.32, 20, 1, true), IMT.cane, g, 0, 0.16, 0);
+    mm(new THREE.CircleGeometry(0.34, 20), IMT.cane, g, 0, 0.01, 0).rotation.x = -Math.PI / 2;
+    mm(new THREE.TorusGeometry(0.5, 0.03, 6, 28), IMT.brown, g, 0, 0.32, 0).rotation.x = Math.PI / 2;
+    [[0, 0], [0.18, 0.1], [-0.16, 0.12], [0.06, -0.2], [-0.12, -0.14]].forEach(function (q) { mm(new THREE.SphereGeometry(0.11, 12, 10), IMT.egg, g, q[0], 0.28, q[1]).scale.y = 1.3; });
+    return g;
+  }
+  function mkMango() {
+    var g = new THREE.Group();
+    mm(new THREE.SphereGeometry(0.25, 20, 14), IMT.orange, g, 0, 0.3, 0).scale.set(1, 1.25, 0.9);
+    mm(new THREE.CylinderGeometry(0.02, 0.02, 0.1, 6), IMT.brown, g, 0, 0.64, 0);
+    mm(new THREE.SphereGeometry(0.12, 12, 8), IMT.leaf, g, 0.1, 0.66, 0).scale.set(1.6, 0.25, 0.7);
+    return g;
+  }
+  function SPH(r) { return new THREE.SphereGeometry(r, 16, 12); }
+  // a round stick from point a to point b
+  function stickM(a, b, r, mat, parent) {
+    var p = new THREE.Vector3(a[0], a[1], a[2]), d = new THREE.Vector3(b[0], b[1], b[2]).sub(p), L = d.length();
+    var m = mm(new THREE.CylinderGeometry(r, r, L, 6), mat, parent);
+    m.position.copy(p).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+    return m;
+  }
+  function mkHandFan() {
+    var g = new THREE.Group(), f = new THREE.Group();
+    for (var i = 0; i < 8; i++) mm(new THREE.CircleGeometry(0.5, 6, i * Math.PI / 4, Math.PI / 4), i % 2 ? IMT.redD : IMT.yellowD, f);
+    mm(new THREE.TorusGeometry(0.5, 0.035, 6, 32), IMT.green, f);
+    mm(new THREE.CircleGeometry(0.13, 16), IMT.greenD, f, 0, 0, 0.003);
+    mm(new THREE.CylinderGeometry(0.035, 0.035, 0.6, 8), IMT.bamboo, f, 0, -0.8, 0);
+    f.rotation.x = -Math.PI / 2 - 0.1; f.position.y = 0.08; g.add(f); g.rotation.y = 2.4; return g;
+  }
+  function mkTeddy() {
+    var g = new THREE.Group(), fur = IMT.teddy, lt = IMT.teddyL;
+    mm(SPH(0.34), fur, g, 0, 0.36, 0).scale.set(1, 1.1, 0.9);
+    mm(SPH(0.2), lt, g, 0, 0.36, 0.2).scale.set(1, 1.1, 0.5);
+    mm(SPH(0.27), fur, g, 0, 0.86, 0.02);
+    mm(SPH(0.11), lt, g, 0, 0.8, 0.23).scale.set(1.1, 0.85, 0.8);
+    mm(SPH(0.04), IMT.black, g, 0, 0.84, 0.31);
+    [-1, 1].forEach(function (s) {
+      mm(SPH(0.1), fur, g, s * 0.19, 1.08, 0);
+      mm(SPH(0.055), lt, g, s * 0.19, 1.08, 0.05);
+      mm(SPH(0.12), fur, g, s * 0.33, 0.45, 0.08).scale.set(0.8, 1.5, 0.8);
+      mm(SPH(0.13), fur, g, s * 0.18, 0.1, 0.25).scale.set(0.9, 0.8, 1.5);
+      mm(SPH(0.03), IMT.black, g, s * 0.09, 0.93, 0.27);
+      mm(new THREE.ConeGeometry(0.07, 0.15, 8), IMT.red, g, s * 0.08, 0.64, 0.26).rotation.z = s * Math.PI / 2;
+    });
+    g.rotation.y = -0.5; return g;
+  }
+  function mkBank() {
+    var g = new THREE.Group();
+    mm(new THREE.LatheGeometry(V2([[0, 0], [0.18, 0], [0.34, 0.12], [0.42, 0.32], [0.38, 0.52], [0.22, 0.66], [0.08, 0.72], [0, 0.73]]), 24), IMT.clay, g);
+    mm(new THREE.TorusGeometry(0.418, 0.022, 6, 32), IMT.yellow, g, 0, 0.32, 0).rotation.x = Math.PI / 2;
+    mm(new THREE.TorusGeometry(0.372, 0.02, 6, 32), IMT.green, g, 0, 0.52, 0).rotation.x = Math.PI / 2;
+    for (var i = 0; i < 8; i++) { var a = i / 8 * Math.PI * 2; mm(SPH(0.035), IMT.white, g, Math.cos(a) * 0.405, 0.42, Math.sin(a) * 0.405); }
+    mm(new THREE.BoxGeometry(0.18, 0.03, 0.04), IMT.black, g, 0, 0.72, 0);
+    return g;
+  }
+  function mkPencilBox() {
+    var g = new THREE.Group();
+    mm(new THREE.BoxGeometry(0.8, 0.12, 0.28), IMT.blue, g, 0, 0.06, 0);
+    mm(new THREE.BoxGeometry(0.82, 0.03, 0.3), IMT.red, g, 0, 0.135, 0);
+    mm(new THREE.BoxGeometry(0.3, 0.005, 0.16), IMT.yellow, g, 0.15, 0.152, 0);
+    [[0.26, IMT.yellow, 0], [0.34, IMT.green, 0.12]].forEach(function (q) {
+      var p = new THREE.Group(); p.position.set(q[2], 0.03, q[0]); p.rotation.y = 0.1; g.add(p);
+      mm(new THREE.CylinderGeometry(0.03, 0.03, 0.62, 6), q[1], p).rotation.z = Math.PI / 2;
+      mm(new THREE.ConeGeometry(0.03, 0.08, 6), IMT.willow, p, 0.35, 0, 0).rotation.z = -Math.PI / 2;
+      mm(new THREE.CylinderGeometry(0.031, 0.031, 0.06, 6), IMT.pink, p, -0.33, 0, 0).rotation.z = Math.PI / 2;
+    });
+    g.rotation.y = -0.3; return g;
+  }
+  function mkAlarm() {
+    var g = new THREE.Group(), c = new THREE.Group();
+    mm(new THREE.CylinderGeometry(0.28, 0.28, 0.16, 24), IMT.red, c).rotation.x = Math.PI / 2;
+    mm(new THREE.CylinderGeometry(0.23, 0.23, 0.02, 24), IMT.face, c, 0, 0, 0.08).rotation.x = Math.PI / 2;
+    mm(new THREE.BoxGeometry(0.025, 0.16, 0.01), IMT.black, c, 0, 0.07, 0.095);
+    mm(new THREE.BoxGeometry(0.12, 0.022, 0.01), IMT.black, c, 0.055, 0, 0.095);
+    [-1, 1].forEach(function (s) {
+      mm(new THREE.SphereGeometry(0.13, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), IMT.gold, c, s * 0.16, 0.25, 0).rotation.z = -s * 0.5;
+      mm(new THREE.CylinderGeometry(0.03, 0.045, 0.12, 8), IMT.black, c, s * 0.17, -0.3, 0).rotation.z = s * 0.35;
+    });
+    mm(new THREE.BoxGeometry(0.03, 0.1, 0.03), IMT.black, c, 0, 0.33, 0);
+    c.position.y = 0.36; g.add(c); g.rotation.y = 0.5; return g;
+  }
+  function mkBat() {
+    var g = new THREE.Group(), b = new THREE.Group();
+    mm(new THREE.BoxGeometry(0.36, 0.07, 1.4), IMT.willow, b, 0, 0.035, 0);
+    mm(new THREE.CylinderGeometry(0.05, 0.05, 0.55, 10), IMT.black, b, 0, 0.05, 0.97).rotation.x = Math.PI / 2;
+    mm(SPH(0.06), IMT.black, b, 0, 0.05, 1.26);
+    mm(new THREE.BoxGeometry(0.28, 0.004, 0.26), IMT.red, b, 0, 0.072, 0.4);
+    mm(new THREE.BoxGeometry(0.28, 0.004, 0.08), IMT.blue, b, 0, 0.072, 0.18);
+    b.position.z = -0.3; g.add(b); g.rotation.y = 0.9; return g;
+  }
+  function mkTiffin() {
+    var g = new THREE.Group();
+    for (var i = 0; i < 3; i++) {
+      mm(new THREE.CylinderGeometry(0.26, 0.25, 0.2, 20), IMT.steel, g, 0, 0.1 + i * 0.21, 0);
+      mm(new THREE.TorusGeometry(0.262, 0.014, 6, 24), IMT.steel, g, 0, 0.205 + i * 0.21, 0).rotation.x = Math.PI / 2;
+    }
+    mm(new THREE.SphereGeometry(0.26, 20, 8, 0, Math.PI * 2, 0, Math.PI / 2), IMT.steel, g, 0, 0.62, 0).scale.y = 0.3;
+    [-1, 1].forEach(function (s) { mm(new THREE.BoxGeometry(0.03, 0.66, 0.06), IMT.steel, g, s * 0.285, 0.36, 0); mm(new THREE.BoxGeometry(0.05, 0.08, 0.08), IMT.red, g, s * 0.29, 0.52, 0); });
+    mm(new THREE.TorusGeometry(0.28, 0.022, 8, 20, Math.PI), IMT.steel, g, 0, 0.66, 0);
+    return g;
+  }
+  function mkBrush() {
+    var g = new THREE.Group();
+    mm(new THREE.CylinderGeometry(0.13, 0.11, 0.3, 16), IMT.green, g, 0, 0.15, 0);
+    var b = new THREE.Group(); b.position.set(0.03, 0.08, 0); b.rotation.z = -0.25; g.add(b);
+    mm(new THREE.BoxGeometry(0.045, 0.6, 0.03), IMT.blue, b, 0, 0.3, 0);
+    mm(new THREE.BoxGeometry(0.05, 0.12, 0.06), IMT.white, b, 0, 0.55, 0.035);
+    var p = new THREE.Group(); p.position.set(-0.05, 0.08, 0.02); p.rotation.z = 0.35; g.add(p);
+    mm(new THREE.CylinderGeometry(0.06, 0.06, 0.42, 12), IMT.white, p, 0, 0.21, 0).scale.z = 0.6;
+    mm(new THREE.CylinderGeometry(0.061, 0.061, 0.1, 12), IMT.red, p, 0, 0.28, 0).scale.z = 0.6;
+    mm(new THREE.CylinderGeometry(0.03, 0.03, 0.06, 8), IMT.red, p, 0, 0.45, 0);
+    return g;
+  }
+  function mkSoap() {
+    var g = new THREE.Group();
+    mm(new THREE.CylinderGeometry(0.34, 0.28, 0.06, 20), IMT.lightBlue, g, 0, 0.03, 0).scale.z = 0.7;
+    mm(SPH(0.2), IMT.pink, g, 0, 0.1, 0).scale.set(1.2, 0.4, 0.75);
+    [[0.15, 0.24, 0.05, 0.06], [-0.1, 0.3, -0.05, 0.05], [0.02, 0.42, 0.02, 0.07], [0.2, 0.46, -0.06, 0.04], [-0.16, 0.52, 0.04, 0.045]].forEach(function (q) {
+      mm(SPH(q[3]), IMT.bubble, g, q[0], q[1], q[2]).castShadow = false;
+    });
+    return g;
+  }
+  function mkBottle() {
+    var g = new THREE.Group();
+    mm(new THREE.LatheGeometry(V2([[0, 0], [0.15, 0], [0.165, 0.02], [0.165, 0.6], [0.12, 0.72], [0.07, 0.78], [0.07, 0.82], [0, 0.82]]), 20), IMT.plastic, g);
+    mm(new THREE.CylinderGeometry(0.08, 0.08, 0.09, 14), IMT.white, g, 0, 0.86, 0);
+    mm(new THREE.CylinderGeometry(0.172, 0.172, 0.2, 20, 1, true), IMT.redD, g, 0, 0.32, 0);
+    return g;
+  }
+  function mkDhol() {
+    var g = new THREE.Group(), d = new THREE.Group();
+    function rad(y) { return 0.3 + 0.1 * (1 - 4 * y * y); }
+    var prof = [];
+    for (var i = 0; i <= 8; i++) { var y = -0.5 + i / 8; prof.push([rad(y), y]); }
+    mm(new THREE.LatheGeometry(V2(prof), 24), IMT.woodRed, d);
+    [-1, 1].forEach(function (s) {
+      mm(new THREE.CylinderGeometry(0.305, 0.305, 0.03, 24), IMT.drumSkin, d, 0, s * 0.5, 0);
+      mm(new THREE.TorusGeometry(0.305, 0.025, 6, 24), IMT.brown, d, 0, s * 0.5, 0).rotation.x = Math.PI / 2;
+    });
+    // zig-zag lacing that hugs the barrel
+    var pts = [];
+    function lace(a0, a1, up) {
+      for (var j = 0; j < 4; j++) {
+        var t0 = j / 4, t1 = (j + 1) / 4, ya = up ? -0.5 + t0 : 0.5 - t0, yb = up ? -0.5 + t1 : 0.5 - t1;
+        var aa = a0 + (a1 - a0) * t0, ab = a0 + (a1 - a0) * t1, ra = rad(ya) + 0.012, rb = rad(yb) + 0.012;
+        pts.push(new THREE.Vector3(Math.cos(aa) * ra, ya, Math.sin(aa) * ra), new THREE.Vector3(Math.cos(ab) * rb, yb, Math.sin(ab) * rb));
+      }
+    }
+    for (var k = 0; k < 10; k++) { var a = k / 10 * Math.PI * 2, st = Math.PI / 10; lace(a, a + st, true); lace(a + st, a + 2 * st, false); }
+    d.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xf2c230 })));
+    d.rotation.z = Math.PI / 2; d.position.y = 0.4; g.add(d); g.rotation.y = 0.3; return g;
+  }
+  function mkEktara() {
+    var g = new THREE.Group(), e = new THREE.Group();
+    mm(SPH(0.24), IMT.gourd, e).scale.set(1, 0.85, 1);
+    mm(new THREE.TorusGeometry(0.235, 0.02, 6, 24), IMT.red, e).rotation.x = Math.PI / 2;
+    [-1, 1].forEach(function (s) { stickM([s * 0.18, 0.1, 0], [s * 0.05, 1.3, 0], 0.025, IMT.bamboo, e); });
+    mm(new THREE.CylinderGeometry(0.025, 0.025, 0.26, 8), IMT.brown, e, 0, 1.22, 0).rotation.z = Math.PI / 2;
+    stickM([0, 0.2, 0], [0, 1.22, 0], 0.006, IMT.white, e);
+    mm(SPH(0.05), IMT.red, e, 0, 1.33, 0);
+    e.rotation.x = -Math.PI / 2 + 0.08; e.position.y = 0.24; g.add(e); g.rotation.y = 0.15; return g;
+  }
+  function mkUmbrella() {
+    var g = new THREE.Group(), u = new THREE.Group();
+    for (var i = 0; i < 8; i++) mm(new THREE.ConeGeometry(1.0, 0.42, 2, 1, true, i * Math.PI / 4, Math.PI / 4), i % 2 ? IMT.blueD : IMT.redD, u);
+    for (var k = 0; k < 8; k++) { var a = k * Math.PI / 4; mm(SPH(0.03), IMT.black, u, Math.sin(a), -0.21, Math.cos(a)); }
+    mm(SPH(0.04), IMT.black, u, 0, 0.24, 0);
+    mm(new THREE.CylinderGeometry(0.022, 0.022, 1.86, 8), IMT.black, u, 0, -0.72, 0);
+    mm(new THREE.TorusGeometry(0.1, 0.03, 8, 16, Math.PI), IMT.brown, u, 0.1, -1.65, 0).rotation.z = Math.PI;
+    u.rotation.z = 0.96; u.position.y = 0.95; g.add(u); return g;
+  }
+  function mkParrot() {
+    var g = new THREE.Group(), p = new THREE.Group();
+    mm(new THREE.CylinderGeometry(0.46, 0.5, 0.1, 20), IMT.woodRed, g, 0, 0.05, 0);
+    for (var i = 0; i < 16; i++) { var a = i / 16 * Math.PI * 2; mm(new THREE.CylinderGeometry(0.012, 0.012, 1.0, 5), IMT.gold, g, Math.cos(a) * 0.44, 0.6, Math.sin(a) * 0.44); }
+    [0.12, 1.1].forEach(function (y) { mm(new THREE.TorusGeometry(0.44, 0.02, 6, 28), IMT.gold, g, 0, y, 0).rotation.x = Math.PI / 2; });
+    [0, Math.PI / 2].forEach(function (a) { var d = mm(new THREE.TorusGeometry(0.44, 0.015, 6, 20, Math.PI), IMT.gold, g, 0, 1.1, 0); d.rotation.y = a; d.scale.y = 0.6; });
+    mm(new THREE.TorusGeometry(0.06, 0.015, 6, 12), IMT.gold, g, 0, 1.42, 0);
+    mm(new THREE.CylinderGeometry(0.02, 0.02, 0.8, 6), IMT.brown, g, 0, 0.5, 0).rotation.z = Math.PI / 2;
+    p.position.set(0, 0.52, 0); g.add(p);
+    mm(SPH(0.15), IMT.parrot, p, 0, 0.17, 0).scale.set(0.9, 1.3, 0.95);
+    [-1, 1].forEach(function (s) { mm(SPH(0.1), IMT.parrotD, p, s * 0.1, 0.16, -0.02).scale.set(0.45, 1.3, 1); mm(SPH(0.018), IMT.black, p, s * 0.07, 0.44, 0.08); });
+    mm(SPH(0.11), IMT.parrot, p, 0, 0.4, 0.03);
+    mm(new THREE.ConeGeometry(0.045, 0.12, 8), IMT.red, p, 0, 0.37, 0.14).rotation.x = Math.PI / 2 + 0.7;
+    mm(new THREE.TorusGeometry(0.09, 0.012, 6, 16), IMT.black, p, 0, 0.32, 0.01).rotation.x = Math.PI / 2 - 0.3;
+    mm(new THREE.BoxGeometry(0.07, 0.34, 0.025), IMT.teal, p, 0, -0.05, -0.12).rotation.x = 0.45;
+    g.userData.wiggle = p; return g;
+  }
+  function mkSling() {
+    var g = new THREE.Group(), s = new THREE.Group();
+    stickM([0, 0, 0], [0, 0.62, 0], 0.05, IMT.woodY, s);
+    stickM([0, 0.6, 0], [-0.23, 1.02, 0], 0.045, IMT.woodY, s); stickM([0, 0.6, 0], [0.23, 1.02, 0], 0.045, IMT.woodY, s);
+    stickM([-0.23, 1.0, 0], [-0.05, 1.42, 0], 0.016, IMT.red, s); stickM([0.23, 1.0, 0], [0.05, 1.42, 0], 0.016, IMT.red, s);
+    mm(new THREE.BoxGeometry(0.16, 0.1, 0.04), IMT.leather, s, 0, 1.45, 0);
+    s.rotation.x = -Math.PI / 2; s.position.y = 0.06; g.add(s); g.rotation.y = 0.7; return g;
+  }
+  function mkCoconut() {
+    var g = new THREE.Group();
+    mm(SPH(0.34), IMT.coco, g, 0, 0.36, 0).scale.set(1, 1.12, 1);
+    mm(new THREE.CylinderGeometry(0.1, 0.13, 0.06, 12), IMT.coco2, g, 0, 0.74, 0);
+    stickM([0.02, 0.74, 0], [0.16, 1.1, 0.02], 0.02, IMT.white, g);
+    mm(SPH(0.3), IMT.coco2, g, 0.52, 0.3, 0.12).scale.set(1.12, 1, 1);
+    mm(SPH(0.05), IMT.brown, g, 0.84, 0.32, 0.14);
+    return g;
+  }
+  function mkLily() {
+    var g = new THREE.Group(), f = new THREE.Group();
+    mm(new THREE.CircleGeometry(0.55, 24, 0.3, Math.PI * 2 - 0.6), IMT.pad, g, 0, 0.03, 0).rotation.x = -Math.PI / 2;
+    f.position.set(0.1, 0.05, 0.04); g.add(f);
+    for (var i = 0; i < 10; i++) { var p = new THREE.Group(); p.rotation.y = i / 10 * Math.PI * 2; f.add(p); var m = mm(SPH(0.1), i % 2 ? IMT.petal : IMT.petalPink, p, 0, 0.08, 0.17); m.scale.set(0.55, 0.25, 1.5); m.rotation.x = -0.55; }
+    for (var j = 0; j < 7; j++) { var q = new THREE.Group(); q.rotation.y = j / 7 * Math.PI * 2 + 0.3; f.add(q); var n = mm(SPH(0.08), IMT.petalPink, q, 0, 0.16, 0.09); n.scale.set(0.5, 0.25, 1.4); n.rotation.x = -1.0; }
+    mm(SPH(0.06), IMT.yellow, f, 0, 0.17, 0);
+    return g;
+  }
+  function mkNatai() {
+    var g = new THREE.Group(), n = new THREE.Group();
+    [-1, 1].forEach(function (s) { mm(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 6), IMT.bamboo, n, 0, s * 0.3, 0); });
+    for (var i = 0; i < 6; i++) { var a = i / 6 * Math.PI * 2; mm(new THREE.CylinderGeometry(0.022, 0.022, 0.64, 5), IMT.brown, n, Math.cos(a) * 0.26, 0, Math.sin(a) * 0.26); }
+    mm(new THREE.CylinderGeometry(0.2, 0.2, 0.52, 18), IMT.thread, n);
+    mm(new THREE.CylinderGeometry(0.035, 0.035, 1.5, 8), IMT.brown, n);
+    n.rotation.z = Math.PI / 2; n.position.y = 0.3; g.add(n); g.rotation.y = 0.5; return g;
+  }
+  // at: [plan x, plan z, height above that floor, inches]; room = a room key, or place = [en, bn] for the yard
+  var ITEMS = [
+    { k: "kite", en: "red kite", bn: "লাল ঘুড়ি", room: "bed3", at: [40, 305, 0], pts: 100, make: mkKite, s: 1 },
+    { k: "top", en: "spinning top", bn: "লাটিম", room: "bed1", at: [52, 132, 0], pts: 100, make: mkTop, s: 1.2 },
+    { k: "book", en: "storybook", bn: "গল্পের বই", room: "bed2", at: [403, 130, 0], pts: 100, make: mkBook, s: 1 },
+    { k: "bag", en: "school bag", bn: "স্কুলব্যাগ", room: "bed4", at: [360, 392, 0], pts: 100, make: mkBag, s: 1 },
+    { k: "lantern", en: "hurricane lantern", bn: "হারিকেন", room: "kitchen", at: [200, 72, 0], pts: 120, make: mkLantern, s: 1.1 },
+    { k: "duck", en: "rubber duck", bn: "রাবারের হাঁস", room: "bathC", at: [284, 62, 0], pts: 150, make: mkDuck, s: 1 },
+    { k: "key", en: "golden key", bn: "সোনার চাবি", room: "bathL", at: [70, 224, 0], pts: 150, make: mkKey, s: 1.2 },
+    { k: "watch", en: "grandpa's watch", bn: "দাদুর হাতঘড়ি", room: "bathR", at: [394, 226, 0], pts: 150, make: mkWatch, s: 1.3 },
+    { k: "marbles", en: "marbles", bn: "মার্বেল", room: "dining", at: [128, 214, 0], pts: 120, make: mkMarbles, s: 1.5 },
+    { k: "car", en: "toy car", bn: "খেলনা গাড়ি", room: "dining", at: [326, 214, 0], pts: 120, make: mkCar, s: 1 },
+    { k: "glasses", en: "grandpa's glasses", bn: "দাদুর চশমা", room: "drawing", at: [227, 361, 16], pts: 120, make: mkGlasses, s: 1.4 },
+    { k: "ball", en: "cricket ball", bn: "ক্রিকেট বল", room: "drawing", at: [262, 322, 0], pts: 100, make: mkBall, s: 1.4 },
+    { k: "football", en: "football", bn: "ফুটবল", room: "verandah", at: [132, 447, 0], pts: 100, make: mkFootball, s: 1 },
+    { k: "flute", en: "bamboo flute", bn: "বাঁশের বাঁশি", room: "verandah", at: [60, 438, 15.5], pts: 120, make: mkFlute, s: 1 },
+    { k: "boat", en: "paper boat", bn: "কাগজের নৌকা", place: ["by the pond", "পুকুর পাড়ে"], at: [-78, 669, 0], pts: 200, make: mkBoat, s: 1.1 },
+    { k: "pot", en: "clay water pot", bn: "মাটির কলসি", place: ["by the tubewell", "টিউবওয়েলের পাশে"], at: [345, -118, 0], pts: 200, make: mkPot, s: 1.1 },
+    { k: "eggs", en: "basket of eggs", bn: "ডিমের ঝুড়ি", place: ["by the haystack", "খড়ের গাদার পাশে"], at: [-72, -200, 0], pts: 200, make: mkEggs, s: 1.1 },
+    { k: "mango", en: "ripe mango", bn: "পাকা আম", place: ["under the mango tree", "আম গাছের নিচে"], at: [735, 615, 0], pts: 200, make: mkMango, s: 1.4 },
+    { k: "fan", en: "hand fan", bn: "হাতপাখা", room: "bed1", at: [80, 92, 23.4], pts: 110, make: mkHandFan, s: 1.1 },
+    { k: "teddy", en: "teddy bear", bn: "টেডি বিয়ার", room: "bed2", at: [372, 88, 23.4], pts: 100, make: mkTeddy, s: 1 },
+    { k: "bank", en: "clay money bank", bn: "মাটির ব্যাংক", room: "bed2", at: [425, 42, 0], pts: 120, make: mkBank, s: 1.1 },
+    { k: "pencil", en: "pencil box", bn: "পেন্সিল বক্স", room: "bed3", at: [46, 404, 30], pts: 120, make: mkPencilBox, s: 1.2 },
+    { k: "alarm", en: "alarm clock", bn: "এলার্ম ঘড়ি", room: "bed4", at: [310, 381, 22], pts: 110, make: mkAlarm, s: 1.2 },
+    { k: "bat", en: "cricket bat", bn: "ক্রিকেট ব্যাট", room: "bed4", at: [425, 322, 0], pts: 100, make: mkBat, s: 1 },
+    { k: "tiffin", en: "tiffin carrier", bn: "টিফিন ক্যারিয়ার", room: "kitchen", at: [214, 22, 33.5], pts: 120, make: mkTiffin, s: 1.1 },
+    { k: "brush", en: "toothbrush", bn: "টুথব্রাশ", room: "bathC", at: [258, 24, 0], pts: 150, make: mkBrush, s: 1.3 },
+    { k: "soap", en: "bar of soap", bn: "সাবান", room: "bathR", at: [432, 196, 0], pts: 150, make: mkSoap, s: 1.3 },
+    { k: "bottle", en: "water bottle", bn: "পানির বোতল", room: "dining", at: [252, 232, 30], pts: 110, make: mkBottle, s: 1.1 },
+    { k: "dhol", en: "dhol drum", bn: "ঢোল", room: "drawing", at: [280, 404, 0], pts: 110, make: mkDhol, s: 1.1 },
+    { k: "ektara", en: "ektara", bn: "একতারা", room: "drawing", at: [180, 369, 16], pts: 120, make: mkEktara, s: 1 },
+    { k: "umbrella", en: "umbrella", bn: "ছাতা", room: "verandah", at: [300, 440, 0], pts: 100, make: mkUmbrella, s: 1 },
+    { k: "parrot", en: "parrot in a cage", bn: "খাঁচার টিয়া পাখি", room: "verandah", at: [438, 437, 0], pts: 120, make: mkParrot, s: 1 },
+    { k: "sling", en: "slingshot", bn: "গুলতি", place: ["under the jackfruit tree", "কাঁঠাল গাছের নিচে"], at: [-252.5, -75, 0], pts: 200, make: mkSling, s: 1.3 },
+    { k: "coconut", en: "green coconuts", bn: "ডাব", place: ["under a coconut palm", "নারকেল গাছের নিচে"], at: [743.5, 177, 0], pts: 200, make: mkCoconut, s: 1.2 },
+    { k: "lily", en: "water lily", bn: "শাপলা ফুল", place: ["on the pond bank, house side", "পুকুরের বাড়ির দিকের পাড়ে"], at: [-276.5, 525, 0], pts: 200, make: mkLily, s: 1.4 },
+    { k: "natai", en: "kite reel (natai)", bn: "নাটাই", place: ["on the north side of the house", "বাড়ির উত্তর পাশে"], at: [-60, 201, 0], pts: 200, make: mkNatai, s: 1.2 }
+  ];
+  function itemName(it) { return lang === "bn" ? it.bn : it.en; }
+  function placeName(it) { return it.place ? it.place[lang === "bn" ? 1 : 0] : (lang === "bn" ? ROOM[it.room].bn : ROOM[it.room].en); }
+
+  // pictures of every item for the task banner
+  var thumbs = {};
+  (function () {
+    var tr;
+    try { tr = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); } catch (e) { return; }
+    tr.setSize(128, 128, false); tr.setPixelRatio(1); tr.outputEncoding = THREE.sRGBEncoding;
+    var ts = new THREE.Scene(), tc = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
+    ts.add(new THREE.HemisphereLight(0xffffff, 0x8a6a4a, 1.0));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(2, 4, 3); ts.add(dl);
+    ITEMS.forEach(function (it) {
+      var g = it.make(); ts.add(g);
+      var box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3()).length();
+      tc.position.set(c.x + sz * 0.95, c.y + sz * 0.75, c.z + sz * 1.35); tc.lookAt(c);
+      tr.render(ts, tc); thumbs[it.k] = tr.domElement.toDataURL("image/png"); ts.remove(g);
+    });
+    tr.dispose(); if (tr.forceContextLoss) tr.forceContextLoss();
+  })();
+
+  // place every item in the house and yard, each with a slightly bigger invisible ball that catches taps
+  var ringGeo = new THREE.TorusGeometry(0.85, 0.05, 8, 40), hitMat = new THREE.MeshBasicMaterial({ visible: false });
+  ITEMS.forEach(function (it, i) {
+    it.obj = it.make(); it.obj.scale.setScalar(it.s);
+    it.baseY = floorAt(it.at[0], it.at[1]) + it.at[2];
+    it.obj.position.set(X(it.at[0]), Y(it.baseY), Z(it.at[1]));
+    it.phase = i * 0.7;
+    it.ring = new THREE.Mesh(ringGeo, IMT.ring); it.ring.rotation.x = Math.PI / 2; it.ring.visible = false;
+    it.ring.position.set(X(it.at[0]), Y(it.baseY) + 0.04, Z(it.at[1]));
+    scene.add(it.obj); scene.add(it.ring);
+    it.obj.updateMatrixWorld(true);
+    var bb = new THREE.Box3().setFromObject(it.obj), rr = Math.max(0.9, bb.getSize(new THREE.Vector3()).length() * 0.55);
+    it.hit = new THREE.Mesh(new THREE.SphereGeometry(rr, 10, 8), hitMat); bb.getCenter(it.hit.position); it.hit.userData.pick = it;
+    scene.add(it.hit);
+  });
+
+  /* ---------- Khalid ---------- */
+  function tube(r1, r2, h, mat, parent, top) {   // a limb hanging down from its joint
+    var geo = new THREE.CylinderGeometry(r1, r2, h, 12); geo.translate(0, -h / 2 + (top || 0), 0);
+    var m = new THREE.Mesh(geo, mat); m.castShadow = true; parent.add(m); return m;
+  }
+  function mkBoy() {
+    var C = {
+      skin: im(0xc68a5a, { roughness: 0.65 }), skinD: im(0xad7048, { roughness: 0.65 }),
+      shirt: im(0xd9412f, { roughness: 0.85 }), stripe: im(0xf2c230, { roughness: 0.85 }), shorts: im(0x2f4f86, { roughness: 0.9 }),
+      belt: im(0x5a3a22), hair: im(0x1b1411, { roughness: 0.55 }), sandal: im(0x2f7fd0, { roughness: 0.7 }), sole: im(0x3a2a20),
+      white: im(0xffffff, { roughness: 0.25 }), iris: im(0x3a2412, { roughness: 0.2 }), pupil: im(0x0d0806, { roughness: 0.2 }),
+      lip: im(0x9a4232), mouth: im(0x5a1a14), blush: im(0xe0786a, { transparent: true, opacity: 0.35, depthWrite: false })
+    };
+    var g = new THREE.Group(), hips = new THREE.Group(); g.add(hips); hips.position.y = 1.55;
+    mm(new THREE.CylinderGeometry(0.35, 0.37, 0.4, 16), C.shorts, hips, 0, 0.02, 0).scale.z = 0.85;
+    mm(new THREE.CylinderGeometry(0.356, 0.356, 0.07, 16), C.belt, hips, 0, 0.2, 0).scale.z = 0.86;
+    function leg(sx) {
+      var hip = new THREE.Group(); hip.position.set(sx * 0.17, -0.05, 0); hips.add(hip);
+      tube(0.19, 0.175, 0.34, C.shorts, hip, 0.1);
+      tube(0.14, 0.125, 0.72, C.skin, hip);
+      var knee = new THREE.Group(); knee.position.y = -0.72; hip.add(knee);
+      mm(new THREE.SphereGeometry(0.127, 12, 8), C.skin, knee);
+      tube(0.125, 0.095, 0.66, C.skin, knee);
+      var ankle = new THREE.Group(); ankle.position.y = -0.66; knee.add(ankle);
+      mm(new THREE.BoxGeometry(0.19, 0.09, 0.3), C.skin, ankle, 0, -0.04, 0.06);
+      mm(new THREE.BoxGeometry(0.23, 0.04, 0.38), C.sole, ankle, 0, -0.1, 0.06);
+      mm(new THREE.BoxGeometry(0.21, 0.035, 0.07), C.sandal, ankle, 0, -0.005, 0.12);
+      return { hip: hip, knee: knee, ankle: ankle };
+    }
+    var L = leg(1), R = leg(-1);   // Khalid faces +z, so his left side is +x
+    var torso = new THREE.Group(); torso.position.y = 0.18; hips.add(torso);
+    mm(new THREE.LatheGeometry(V2([[0, 0], [0.37, 0], [0.4, 0.22], [0.39, 0.55], [0.37, 0.8], [0.3, 0.98], [0.14, 1.06], [0, 1.07]]), 20), C.shirt, torso).scale.z = 0.78;
+    [[0.36, 0.404], [0.56, 0.396]].forEach(function (q) { mm(new THREE.CylinderGeometry(q[1], q[1] + 0.002, 0.09, 20, 1, true), C.stripe, torso, 0, q[0], 0).scale.z = 0.79; });
+    mm(new THREE.TorusGeometry(0.15, 0.035, 8, 20), C.stripe, torso, 0, 1.03, 0).rotation.x = Math.PI / 2;
+    mm(new THREE.BoxGeometry(0.13, 0.14, 0.02), C.stripe, torso, 0.17, 0.74, 0.265);
+    mm(new THREE.CylinderGeometry(0.11, 0.12, 0.22, 12), C.skin, torso, 0, 1.13, 0);
+    function arm(sx) {
+      var sh = new THREE.Group(); sh.position.set(sx * 0.41, 0.9, 0); torso.add(sh);
+      mm(new THREE.SphereGeometry(0.15, 12, 10), C.shirt, sh);
+      tube(0.15, 0.13, 0.3, C.shirt, sh, 0.02);
+      tube(0.1, 0.092, 0.46, C.skin, sh);
+      var el = new THREE.Group(); el.position.y = -0.46; sh.add(el);
+      mm(new THREE.SphereGeometry(0.092, 10, 8), C.skin, el);
+      tube(0.09, 0.078, 0.4, C.skin, el);
+      mm(new THREE.SphereGeometry(0.105, 12, 10), C.skin, el, 0, -0.47, 0.01).scale.set(0.78, 1.05, 0.95);
+      mm(new THREE.SphereGeometry(0.04, 8, 6), C.skin, el, -sx * 0.06, -0.43, 0.05);
+      return { sh: sh, el: el, sx: sx };
+    }
+    var AL = arm(1), AR = arm(-1);
+    // head
+    var head = new THREE.Group(); head.position.y = 1.52; torso.add(head);
+    mm(new THREE.SphereGeometry(0.44, 24, 18), C.skin, head).scale.set(1, 1.03, 0.96);
+    [-1, 1].forEach(function (s) { mm(new THREE.SphereGeometry(0.1, 10, 8), C.skin, head, s * 0.43, -0.02, -0.02).scale.set(0.45, 1, 0.75); });
+    mm(new THREE.SphereGeometry(0.465, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.56), C.hair, head, 0, 0.03, -0.035).rotation.x = -0.8;
+    for (var i = -2; i <= 2; i++) mm(new THREE.SphereGeometry(0.095, 10, 8), C.hair, head, i * 0.1, 0.31 - Math.abs(i) * 0.025, 0.32 - Math.abs(i) * 0.035).scale.set(1.25, 0.7, 0.8);
+    [[0.05, -0.05, -0.4, -0.2], [-0.07, 0.02, 0.35, -0.35]].forEach(function (q) { var c = mm(new THREE.ConeGeometry(0.07, 0.2, 8), C.hair, head, q[0], 0.46, q[1]); c.rotation.z = q[2]; c.rotation.x = q[3]; });
+    var eyes = [], brows = [];
+    [-1, 1].forEach(function (s) {
+      var e = new THREE.Group(); e.position.set(s * 0.155, 0.04, 0.37); head.add(e);
+      mm(new THREE.SphereGeometry(0.085, 14, 10), C.white, e).scale.set(1, 1.2, 0.55);
+      mm(new THREE.SphereGeometry(0.055, 12, 8), C.iris, e, 0, -0.005, 0.035).scale.set(1, 1.1, 0.5);
+      mm(new THREE.SphereGeometry(0.03, 8, 6), C.pupil, e, 0, -0.005, 0.055).scale.set(1, 1.1, 0.5);
+      mm(new THREE.SphereGeometry(0.014, 6, 4), C.white, e, -0.018, 0.025, 0.066);
+      eyes.push(e);
+      var b = mm(new THREE.BoxGeometry(0.13, 0.028, 0.03), C.hair, head, s * 0.155, 0.17, 0.385); b.rotation.z = -s * 0.12; brows.push(b);
+      mm(new THREE.SphereGeometry(0.07, 10, 8), C.blush, head, s * 0.26, -0.1, 0.33).scale.set(1, 0.6, 0.35);
+    });
+    mm(new THREE.SphereGeometry(0.05, 10, 8), C.skinD, head, 0, -0.07, 0.425).scale.set(1, 0.8, 0.8);
+    var smile = mm(new THREE.TorusGeometry(0.075, 0.016, 6, 16, Math.PI), C.lip, head, 0, -0.17, 0.39); smile.rotation.z = Math.PI;
+    var mouthO = mm(new THREE.SphereGeometry(0.07, 12, 8), C.mouth, head, 0, -0.19, 0.375); mouthO.scale.set(1.1, 0.8, 0.45); mouthO.visible = false;
+    g.traverse(function (o) { if (o.isMesh && o.material === C.blush) o.castShadow = false; });
+    scene.add(g);
+    return { g: g, hips: hips, torso: torso, head: head, L: L, R: R, AL: AL, AR: AR, eyes: eyes, brows: brows, smile: smile, mouthO: mouthO };
+  }
+
+  /* ---------- Bhulu, Khalid's dog ---------- */
+  function mkDog() {
+    var fur = im(0xc98d4f, { roughness: 0.95 }), furD = im(0x94602f, { roughness: 0.95 }), cream = im(0xf3e3c3, { roughness: 0.95 }),
+      dark = im(0x2a1d15, { roughness: 0.4 }), pink = im(0xe58a8f, { roughness: 0.5 }), red = im(0xc0392b, { roughness: 0.6 }), white = im(0xffffff, { roughness: 0.3 });
+    var g = new THREE.Group(), root = new THREE.Group(), spine = new THREE.Group();
+    g.add(root); root.add(spine); spine.position.set(0, 1.24, -0.5);   // the spine pivots at the hips so the dog can sit
+    mm(SPH(0.5), fur, spine, 0, 0.02, 0.5).scale.set(0.72, 0.74, 1.35);
+    mm(SPH(0.34), cream, spine, 0, -0.08, 0.92).scale.set(0.85, 0.95, 0.75);
+    mm(SPH(0.3), cream, spine, 0, -0.2, 0.45).scale.set(0.8, 0.5, 1.4);
+    function dleg(x, z, front) {
+      var up = new THREE.Group(); up.position.set(x, -0.1, z); spine.add(up);
+      mm(SPH(0.16), fur, up, 0, -0.06, 0).scale.set(0.8, 1.3, 1.1);
+      tube(0.1, 0.085, 0.55, fur, up);
+      var lo = new THREE.Group(); lo.position.y = -0.55; up.add(lo);
+      mm(SPH(0.085), fur, lo);
+      tube(0.075, 0.065, 0.52, front ? cream : fur, lo);
+      mm(SPH(0.09), cream, lo, 0, -0.54, 0.05).scale.set(1, 0.6, 1.4);
+      return { up: up, lo: lo };
+    }
+    var FL = dleg(0.2, 0.9, true), FR = dleg(-0.2, 0.9, true), BL = dleg(0.22, 0.12, false), BR = dleg(-0.22, 0.12, false);
+    var neck = new THREE.Group(); neck.position.set(0, 0.18, 1.08); spine.add(neck);
+    mm(new THREE.CylinderGeometry(0.19, 0.25, 0.5, 12), fur, neck, 0, 0.16, 0.04).rotation.x = 0.5;
+    mm(new THREE.TorusGeometry(0.21, 0.045, 8, 20), red, neck, 0, 0.1, 0.02).rotation.x = Math.PI / 2 - 0.5;
+    mm(SPH(0.055), IMT.gold, neck, 0, -0.03, 0.24);
+    var head = new THREE.Group(); head.position.set(0, 0.45, 0.2); neck.add(head);
+    mm(SPH(0.3), fur, head).scale.set(1, 0.92, 1.05);
+    mm(SPH(0.2), cream, head, 0, -0.1, 0.17).scale.set(0.95, 0.75, 1);
+    mm(new THREE.CylinderGeometry(0.1, 0.13, 0.3, 12), fur, head, 0, -0.05, 0.37).rotation.x = Math.PI / 2;
+    mm(SPH(0.055), dark, head, 0, -0.02, 0.53).scale.set(1.2, 0.9, 0.8);
+    var jaw = new THREE.Group(); jaw.position.set(0, -0.13, 0.22); head.add(jaw);
+    mm(new THREE.BoxGeometry(0.15, 0.05, 0.3), cream, jaw, 0, -0.02, 0.13);
+    var tongue = mm(new THREE.BoxGeometry(0.09, 0.02, 0.2), pink, jaw, 0, -0.02, 0.3); tongue.rotation.x = 0.6;
+    [-1, 1].forEach(function (s) {
+      mm(SPH(0.045), dark, head, s * 0.12, 0.07, 0.26);
+      mm(SPH(0.014), white, head, s * 0.12 - 0.012, 0.09, 0.3);
+      mm(SPH(0.035), cream, head, s * 0.1, 0.15, 0.25).scale.set(1.2, 0.6, 0.6);
+    });
+    var ears = [];
+    [-1, 1].forEach(function (s) {
+      var ear = new THREE.Group(); ear.position.set(s * 0.17, 0.2, -0.03); ear.rotation.z = -s * 0.32; head.add(ear);
+      mm(new THREE.ConeGeometry(0.1, 0.28, 8), furD, ear, 0, 0.12, 0).scale.z = 0.45;
+      ears.push(ear);
+    });
+    var tail = new THREE.Group(); tail.position.set(0, 0.22, -0.06); spine.add(tail);
+    mm(new THREE.TorusGeometry(0.2, 0.055, 8, 16, Math.PI * 1.25), fur, tail, 0, 0.2, 0).rotation.set(0, Math.PI / 2, -Math.PI / 2);
+    mm(SPH(0.06), cream, tail, 0, 0.34, 0.14);
+    scene.add(g);
+    return { g: g, root: root, spine: spine, FL: FL, FR: FR, BL: BL, BR: BR, neck: neck, head: head, jaw: jaw, tongue: tongue, ears: ears, tail: tail };
+  }
+
+  var boy = mkBoy(), dog = mkDog();
+  var dogHit = new THREE.Mesh(new THREE.SphereGeometry(1.0, 10, 8), hitMat); dogHit.position.set(0, 1.2, 0.3); dogHit.userData.pick = "dog"; dog.g.add(dogHit);
+  var arrow = new THREE.Group();
+  (function () { var cg = new THREE.ConeGeometry(0.28, 0.75, 16); cg.rotateX(Math.PI / 2); var m = new THREE.Mesh(cg, IMT.ring); arrow.add(m); arrow.visible = false; scene.add(arrow); })();
+  var START = { x: 227.5, z: 600 };
+  var P = { x: START.x, z: START.z, y: -30, face: Math.PI, faceGoal: null };
+  // Khalid's animation state (speed in ft/s)
+  var BA = { spd: 0, ph: 0, lastC: 1, blink: 2, look: 0, lookGoal: 0, lookT: 1, cheer: -1, shrug: -1, roll: 0, prevFace: Math.PI };
+  // Bhulu's state (plan inches, like Khalid)
+  var DG = { x: 0, z: 0, y: -30, face: Math.PI, spd: 0, ph: 0, sit: 1, still: 2, bark: -1, barkAt: null, happy: -1, look: 0 };
+  var trail = [];   // Khalid's footsteps; Bhulu walks along them, so he goes through the same doors
+  var tmpW = new THREE.Vector3();
+
+  /* ---------- sound (made in the browser, no files) ---------- */
+  var AC = null, muted = false, noiseBuf = null;
+  function audio() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } }
+    if (AC && AC.state === "suspended") AC.resume();
+  }
+  function tone(f, t, d, type, v) {
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + 0.05);
+  }
+  function noise() {
+    if (!noiseBuf) {
+      noiseBuf = AC.createBuffer(1, Math.floor(AC.sampleRate * 0.3), AC.sampleRate);
+      var d = noiseBuf.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    var s = AC.createBufferSource(); s.buffer = noiseBuf; return s;
+  }
+  // one "woof": a falling growl through a mouth-like filter, plus a breathy burst at the start
+  function woof(t, p) {
+    var o = AC.createOscillator(), bp = AC.createBiquadFilter(), g = AC.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(300 * p, t); o.frequency.linearRampToValueAtTime(560 * p, t + 0.035); o.frequency.exponentialRampToValueAtTime(190 * p, t + 0.17);
+    bp.type = "bandpass"; bp.Q.value = 1.6; bp.frequency.setValueAtTime(1300, t); bp.frequency.exponentialRampToValueAtTime(520, t + 0.17);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.55, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o.connect(bp); bp.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.22);
+    var n = noise(), nb = AC.createBiquadFilter(), ng = AC.createGain();
+    nb.type = "bandpass"; nb.frequency.value = 1700; nb.Q.value = 0.9;
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.3, t + 0.01); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    n.connect(nb); nb.connect(ng); ng.connect(AC.destination); n.start(t); n.stop(t + 0.12);
+  }
+  function sfx(kind) {
+    if (muted || !AC) return;
+    var t = AC.currentTime;
+    if (kind === "found") [523, 659, 784, 1047].forEach(function (f, i) { tone(f, t + i * 0.08, 0.18, "triangle", 0.2); });
+    else if (kind === "bark") { woof(t, 1); woof(t + 0.3, 1.06); }
+    else if (kind === "step") {
+      var n = noise(), lp = AC.createBiquadFilter(), g = AC.createGain();
+      lp.type = "lowpass"; lp.frequency.value = 650;
+      g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+      n.connect(lp); lp.connect(g); g.connect(AC.destination); n.start(t); n.stop(t + 0.07);
+    }
+    else if (kind === "hint") [880, 1175].forEach(function (f, i) { tone(f, t + i * 0.12, 0.25, "sine", 0.15); });
+    else if (kind === "done") [523, 659, 784, 1047, 1319, 1568].forEach(function (f, i) { tone(f, t + i * 0.11, 0.3, "triangle", 0.2); });
+  }
+
+  /* ---------- game state ---------- */
+  var game = { state: "menu", score: 0, list: [], idx: 0, t: 0, total: 0, hint: false, sparkle: false, lastSec: -1, found: [] };
+  var cam = { yaw: 0, dist: 17, h: 9, look: new THREE.Vector3(0, 0, 0), orbit: 0 };
+  function readBest() { try { return parseInt(localStorage.getItem("rafi-hunt-best") || "0", 10) || 0; } catch (e) { return 0; } }
+  function saveBest(v) { try { localStorage.setItem("rafi-hunt-best", String(v)); } catch (e) {} }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  // 10 things a round: 3 in the yard, 2 in the baths, 5 in the other rooms and the verandah
+  function pickRound() {
+    var yardI = shuffle(ITEMS.filter(function (i) { return i.place; })).slice(0, 3);
+    var bath = shuffle(ITEMS.filter(function (i) { return i.room && i.room.indexOf("bath") === 0; })).slice(0, 2);
+    var rest = shuffle(ITEMS.filter(function (i) { return !i.place && !(i.room && i.room.indexOf("bath") === 0); })).slice(0, 5);
+    return shuffle(yardI.concat(bath, rest));
+  }
+  var toastTimer = null;
+  function toast(text, ms) {
+    var el = $("toast"); el.textContent = text; el.classList.add("on");
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove("on"); }, ms || 2200);
+  }
+  function setTask() {
+    var it = game.list[game.idx];
+    if (!it) return;
+    $("task-img").src = thumbs[it.k] || ""; $("task-img").alt = itemName(it);
+    $("task-name").textContent = itemName(it);
+    $("task-hint").textContent = game.hint ? u("look", { p: placeName(it) }) : "";
+    $("h-count").textContent = num(game.idx + 1) + " / " + num(game.list.length);
+  }
+  function hudScore() { $("h-score").textContent = num(game.score); }
+  function placeDog() {
+    trail.length = 0; DG.x = P.x + 30; DG.z = P.z + 10; DG.y = floorAt(DG.x, DG.z); DG.face = P.face;
+    DG.spd = 0; DG.sit = 1; DG.still = 2; DG.bark = -1; DG.happy = -1;
+  }
+  function isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function goFull() {
+    var el = document.documentElement;
+    try {
+      var pr = el.requestFullscreen ? el.requestFullscreen({ navigationUI: "hide" }) : (el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null);
+      if (pr && pr.then) pr.then(function () { try { screen.orientation.lock("landscape").catch(function () {}); } catch (e) {} }).catch(function () {});
+    } catch (e) {}
+  }
+  function startGame() {
+    audio();
+    if (touch && !inApp && !isFull()) goFull();
+    game.list = pickRound(); game.idx = 0; game.score = 0; game.t = 0; game.total = 0; game.hint = false; game.sparkle = false; game.lastSec = -1; game.found = [];
+    ITEMS.forEach(function (it) { it.gone = false; it.near = false; it.anim = -1; it.obj.visible = true; it.obj.scale.setScalar(it.s); it.obj.position.y = Y(it.baseY); it.ring.visible = false; });
+    P.x = START.x; P.z = START.z; P.y = -30; P.face = Math.PI; P.faceGoal = null; cam.yaw = 0;
+    BA.cheer = -1; BA.shrug = -1; BA.spd = 0;
+    placeDog();
+    $("menu").hidden = true; $("done").hidden = true; $("pause").hidden = true; $("hud").hidden = false; $("bubble").hidden = true; bubbleT = 0;
+    game.state = "play";
+    hudScore(); setTask();
+    toast(lang === "bn" ? "খুঁজে বের করো: " + itemName(game.list[0]) : "Find the " + itemName(game.list[0]) + "!", 2600);
+  }
+  function useHint() {
+    if (game.state !== "play" || game.hint) return;
+    var it = game.list[game.idx];
+    game.hint = true; game.score = Math.max(0, game.score - 40); hudScore();
+    it.ring.visible = true; arrow.visible = true;
+    $("task-hint").textContent = u("look", { p: placeName(it) });
+    toast(u("hintToast", { p: placeName(it) })); sfx("hint");
+  }
+  function popText(text, obj) {
+    var v = obj.position.clone(); v.y += 1.6; v.project(camera);
+    var el = document.createElement("div"); el.className = "pop"; el.textContent = text;
+    el.style.left = ((v.x * 0.5 + 0.5) * stage.clientWidth) + "px"; el.style.top = ((-v.y * 0.5 + 0.5) * stage.clientHeight) + "px";
+    $("hud").appendChild(el); setTimeout(function () { el.remove(); }, 1300);
+  }
+  var sparks = [], sparkGeo = new THREE.SphereGeometry(0.07, 6, 4);
+  function burst(pos) {
+    for (var i = 0; i < 18; i++) {
+      var m = new THREE.Mesh(sparkGeo, IMT.ring); m.position.copy(pos); m.position.y += 0.6;
+      var a = Math.random() * Math.PI * 2, s = 3 + Math.random() * 4;
+      m.userData.v = new THREE.Vector3(Math.cos(a) * s, 5 + Math.random() * 4, Math.sin(a) * s); m.userData.life = 0.9;
+      scene.add(m); sparks.push(m);
+    }
+  }
+  // little dust clouds when Khalid runs on the ground outside
+  var puffs = [], puffI = 0, puffGeo = new THREE.SphereGeometry(0.22, 8, 6);
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].forEach(function () {
+    var pmat = new THREE.MeshLambertMaterial({ color: 0xcdb892, transparent: true, opacity: 0, depthWrite: false }); pmat.color.convertSRGBToLinear();
+    var pm = new THREE.Mesh(puffGeo, pmat); pm.visible = false; pm.userData.life = 0; scene.add(pm); puffs.push(pm);
+  });
+  function puff(pos) { var m = puffs[puffI++ % puffs.length]; m.position.copy(pos); m.position.y += 0.12; m.userData.life = 0.6; m.visible = true; }
+  function updateFx(dt) {
+    for (var i = sparks.length - 1; i >= 0; i--) {
+      var sp = sparks[i]; sp.userData.life -= dt;
+      sp.userData.v.y -= 18 * dt; sp.position.addScaledVector(sp.userData.v, dt); sp.scale.setScalar(Math.max(0.01, sp.userData.life / 0.9));
+      if (sp.userData.life <= 0) { scene.remove(sp); sparks.splice(i, 1); }
+    }
+    puffs.forEach(function (m) {
+      if (!m.visible) return;
+      m.userData.life -= dt;
+      if (m.userData.life <= 0) { m.visible = false; return; }
+      var k = 1 - m.userData.life / 0.6;
+      m.scale.setScalar(0.5 + k * 1.3); m.material.opacity = 0.5 * (1 - k); m.position.y += dt * 0.5;
+    });
+  }
+  function found(it) {
+    var bonus = Math.max(0, Math.round((45 - game.t) * 3)), pts = it.pts + bonus;
+    game.score += pts; hudScore();
+    game.found.push({ it: it, t: game.t });
+    it.gone = true; it.anim = 0; it.ring.visible = false; arrow.visible = false;
+    popText("+" + num(pts), it.obj); burst(it.obj.position); sfx("found");
+    toast(u("found", { i: itemName(it), p: num(pts) }) + (bonus >= 60 ? u("speedy") : ""));
+    BA.cheer = 0; BA.shrug = -1; DG.happy = 0;
+    P.faceGoal = Math.atan2(it.at[0] - P.x, it.at[1] - P.z);
+    game.idx++; game.t = 0; game.hint = false; game.sparkle = false;
+    var next = game.list[game.idx];
+    if (next) next.near = false;
+    if (game.idx >= game.list.length) { setTimeout(finish, 1100); game.state = "ending"; }
+    else setTask();
+  }
+  // the wrong thing: Bhulu turns to it and barks, and Khalid shrugs
+  var bubbleT = 0;
+  function wrongPick(it) {
+    if (DG.bark >= 0 && DG.bark < 0.55) return;
+    DG.bark = 0; DG.barkAt = { x: it.at[0], z: it.at[1] };
+    BA.shrug = 0; sfx("bark"); showBubble();
+  }
+  function showBubble() {
+    var b = $("bubble"); b.textContent = u("woof"); b.hidden = false;
+    b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+    bubbleT = 1.4; updateBubble(0);
+  }
+  function updateBubble(dt) {
+    if (bubbleT <= 0) return;
+    var b = $("bubble");
+    bubbleT -= dt;
+    if (bubbleT <= 0) { b.hidden = true; return; }
+    dog.head.getWorldPosition(tmpW); tmpW.y += 0.75; tmpW.project(camera);
+    b.style.visibility = tmpW.z > 1 ? "hidden" : "";
+    b.style.left = ((tmpW.x * 0.5 + 0.5) * stage.clientWidth) + "px"; b.style.top = ((-tmpW.y * 0.5 + 0.5) * stage.clientHeight) + "px";
+  }
+  function finish() {
+    game.state = "done"; sfx("done");
+    var max = game.list.reduce(function (s, it) { return s + it.pts + 135; }, 0), ratio = game.score / max;
+    var stars = ratio >= 0.72 ? 3 : ratio >= 0.45 ? 2 : 1, best = readBest(), isBest = game.score > best;
+    if (isBest) { best = game.score; saveBest(best); }
+    game.stars = stars; game.isBest = isBest;
+    BA.cheer = 0; DG.happy = 0;
+    renderDone(); $("done").hidden = false; $("hud").hidden = true;
+  }
+  function renderDone() {
+    $("d-title").textContent = game.isBest ? u("newBest") : u("doneTitle");
+    $("d-stars").innerHTML = [0, 1, 2].map(function (i) { return '<span class="' + (i < game.stars ? "" : "off") + '">★</span>'; }).join("");
+    $("d-score").textContent = u("doneScore", { s: num(game.score), b: num(readBest()) });
+    $("d-text").textContent = u("doneText", { n: num(game.list.length), t: fmtTime(game.total) });
+    $("d-list").innerHTML = game.found.map(function (f) { return '<figure><img src="' + (thumbs[f.it.k] || "") + '" alt="' + itemName(f.it) + '"><figcaption>' + fmtTime(f.t) + "</figcaption></figure>"; }).join("");
+    $("d-again").textContent = u("again");
+  }
+  function pause() {
+    if (game.state !== "play") return;
+    game.state = "pause"; $("pause").hidden = false;
+  }
+  function resume() { if (game.state !== "pause") return; game.state = "play"; $("pause").hidden = true; }
+  function showMenu() {
+    game.state = "menu";
+    ["done", "pause", "hud"].forEach(function (id) { $(id).hidden = true; });
+    $("menu").hidden = false;
+    P.x = START.x; P.z = START.z; P.y = -30; P.face = Math.PI; placeDog(); setLang(lang);
+  }
+  // hooks for the Android app: the back button and leaving the app
+  window.rafiBack = function () {
+    if (game.state === "play") { pause(); return true; }
+    if (game.state === "pause") { resume(); return true; }
+    if (game.state === "done") { showMenu(); return true; }
+    return false;
+  };
+  window.rafiPause = function () { pause(); if (AC && AC.state === "running") AC.suspend(); };
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) window.rafiPause();
+    else if (AC && AC.state === "suspended" && !muted) AC.resume();
+  });
+
+  /* ---------- language ---------- */
+  function setLang(l) {
+    lang = l;
+    document.documentElement.lang = l;
+    $("m-en").setAttribute("aria-pressed", l === "en"); $("m-bn").setAttribute("aria-pressed", l === "bn");
+    $("m-title").textContent = u("title"); $("m-story").textContent = u("story"); $("m-score").textContent = u("score");
+    $("m-ctl").textContent = (touch ? u("touch") : u("keys")) + (touch && !inApp && window.innerHeight > window.innerWidth ? " " + u("rotate") : "");
+    $("m-start").textContent = u("start");
+    var b = readBest(); $("m-best").textContent = b ? u("best", { b: num(b) }) : "";
+    $("m-credit").textContent = u("credit");
+    $("l-score").textContent = u("lScore"); $("l-find").textContent = u("lFind"); $("l-item").textContent = u("lItem");
+    $("keys").textContent = touch ? "" : u("keys"); $("b-lang").textContent = u("langBtn");
+    $("b-full").setAttribute("aria-label", u("full"));
+    $("p-title").textContent = u("paused"); $("p-resume").textContent = u("resume"); $("p-restart").textContent = u("restart");
+    if (bubbleT > 0) $("bubble").textContent = u("woof");
+    if (game.list.length) { setTask(); hudScore(); }
+    if (game.state === "done") renderDone();
+    try { localStorage.setItem("rafi-hunt-lang", l); } catch (e) {}
+  }
+
+  /* ---------- controls ---------- */
+  var keys = {}, joy = { x: 0, y: 0, id: null }, drag = null;
+  window.addEventListener("keydown", function (e) {
+    if (game.state === "pause" && (e.code === "Escape" || e.code === "KeyP")) { resume(); return; }
+    if (game.state !== "play") return;
+    keys[e.code] = true;
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].indexOf(e.code) >= 0) e.preventDefault();
+    if (e.code === "KeyH") useHint();
+    if (e.code === "KeyM") toggleSound();
+    if (e.code === "Escape" || e.code === "KeyP") pause();
+  });
+  window.addEventListener("keyup", function (e) { keys[e.code] = false; });
+  window.addEventListener("blur", function () { keys = {}; pause(); });
+  var canvasEl = renderer.domElement, ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hoverT = 0;
+  function pickAt(cx, cy) {
+    var rc = canvasEl.getBoundingClientRect();
+    ndc.set((cx - rc.left) / rc.width * 2 - 1, -((cy - rc.top) / rc.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var list = [dogHit];
+    ITEMS.forEach(function (it) { if (!it.gone) list.push(it.hit); });
+    var hs = ray.intersectObjects(list, false);
+    return hs.length ? hs[0].object.userData.pick : null;
+  }
+  // a tap or click on a thing: pick it up if it is the one and Khalid is close, or Bhulu barks
+  function tapAt(cx, cy) {
+    if (game.state !== "play") return;
+    audio();
+    var p = pickAt(cx, cy);
+    if (!p) return;
+    if (p === "dog") { DG.happy = 0; return; }
+    if (p !== game.list[game.idx]) { wrongPick(p); return; }
+    var dx = p.at[0] - P.x, dz = p.at[1] - P.z, d = Math.sqrt(dx * dx + dz * dz);
+    if (d <= 120 && Math.abs(p.baseY - P.y) <= 48 && (d <= 48 || roomAt(P.x, P.z) === roomAt(p.at[0], p.at[1]))) found(p);
+    else toast(u("closer"));
+  }
+  canvasEl.addEventListener("pointerdown", function (e) { drag = { id: e.pointerId, x: e.clientX, sx: e.clientX, sy: e.clientY, t: performance.now() }; });
+  canvasEl.addEventListener("pointermove", function (e) {
+    if (drag && drag.id === e.pointerId) { cam.yaw -= (e.clientX - drag.x) * 0.006; drag.x = e.clientX; return; }
+    if (e.pointerType === "mouse" && game.state === "play") {
+      var n = performance.now(); if (n - hoverT < 90) return; hoverT = n;
+      canvasEl.style.cursor = pickAt(e.clientX, e.clientY) ? "pointer" : "";
+    }
+  });
+  canvasEl.addEventListener("pointerup", function (e) {
+    if (!drag || drag.id !== e.pointerId) return;
+    if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 12 && performance.now() - drag.t < 500) tapAt(e.clientX, e.clientY);
+    drag = null;
+  });
+  ["pointercancel", "pointerleave"].forEach(function (ev) { canvasEl.addEventListener(ev, function (e) { if (drag && drag.id === e.pointerId) drag = null; }); });
+  canvasEl.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  var joyEl = $("joy"), knob = $("knob");
+  function moveJoy(e) {
+    var r = joyEl.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), m = r.width / 2 - 22, d = Math.sqrt(dx * dx + dy * dy);
+    if (d > m) { dx *= m / d; dy *= m / d; }
+    knob.style.transform = "translate(" + dx + "px," + dy + "px)"; joy.x = dx / m; joy.y = dy / m;
+  }
+  joyEl.addEventListener("pointerdown", function (e) { joy.id = e.pointerId; joyEl.setPointerCapture(e.pointerId); moveJoy(e); e.stopPropagation(); });
+  joyEl.addEventListener("pointermove", function (e) { if (joy.id === e.pointerId) moveJoy(e); });
+  ["pointerup", "pointercancel"].forEach(function (ev) { joyEl.addEventListener(ev, function (e) { if (joy.id === e.pointerId) { joy.id = null; joy.x = joy.y = 0; knob.style.transform = ""; } }); });
+  if (touch) joyEl.hidden = false;
+  function toggleSound() {
+    muted = !muted;
+    $("snd-on").style.display = muted ? "none" : ""; $("snd-off").style.display = muted ? "" : "none";
+    $("b-sound").setAttribute("aria-label", muted ? "Sound off" : "Sound on");
+  }
+  $("b-hint").addEventListener("click", useHint);
+  $("b-sound").addEventListener("click", function () { audio(); toggleSound(); });
+  $("b-lang").addEventListener("click", function () { setLang(lang === "en" ? "bn" : "en"); });
+  $("b-pause").addEventListener("click", pause);
+  if (touch && !inApp && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) $("b-full").hidden = false;
+  $("b-full").addEventListener("click", function () {
+    if (!isFull()) { goFull(); return; }
+    var ex = document.exitFullscreen || document.webkitExitFullscreen; if (ex) ex.call(document);
+  });
+  $("p-resume").addEventListener("click", resume);
+  $("p-restart").addEventListener("click", startGame);
+  $("m-start").addEventListener("click", startGame);
+  $("d-again").addEventListener("click", startGame);
+  $("m-en").addEventListener("click", function () { setLang("en"); });
+  $("m-bn").addEventListener("click", function () { setLang("bn"); });
+
+  function resize() {
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener("resize", resize);
+  resize();
+
+  /* ---------- Khalid's moves ---------- */
+  function animBoy(dt, now) {
+    var t = now / 1000, b = boy, sp = BA.spd;
+    var mv = clamp(sp / 1.2, 0, 1), run = clamp((sp - 3.2) / 3.4, 0, 1), idle = 1 - mv;
+    BA.ph += dt * (3 + sp * 1.05);
+    var s = Math.sin(BA.ph), c = Math.cos(BA.ph);
+    // a foot lands each time the stride reaches its front-most point
+    if (mv > 0.4 && (c >= 0) !== (BA.lastC >= 0) && game.state === "play") {
+      sfx("step");
+      if (run > 0.3 && P.y < -20) { (c < 0 ? b.L : b.R).ankle.getWorldPosition(tmpW); puff(tmpW); }
+    }
+    BA.lastC = c;
+    // walk or run: legs swing, knees bend on the way forward, arms swing the other way
+    var A = (0.42 + 0.4 * run) * mv, kneeA = 0.55 + 0.85 * run;
+    var thL = -A * s, thR = A * s;
+    var kL = (0.08 + kneeA * Math.max(0, c)) * mv, kR = (0.08 + kneeA * Math.max(0, -c)) * mv;
+    var AA = (0.32 + 0.55 * run) * mv, sway = Math.sin(t * 1.3) * 0.04 * idle;
+    var shL = AA * s + sway, shR = -AA * s + sway, elb = -0.1 - (0.15 + 1.05 * run) * mv, out = 0.09 + 0.05 * run;
+    var bob = (0.03 + 0.09 * run) * mv * (Math.abs(c) - 0.5);
+    var lean = (0.04 + 0.2 * run) * mv, twist = s * (0.1 + 0.08 * run) * mv;
+    var breathe = Math.sin(t * 2.3) * idle;
+    // standing still: look around now and then, and blink
+    BA.lookT -= dt;
+    if (BA.lookT < 0) { BA.lookT = 1.4 + Math.random() * 2.6; BA.lookGoal = (Math.random() - 0.5) * 1.1; }
+    BA.look += (BA.lookGoal * idle - BA.look) * Math.min(1, dt * 3.5);
+    BA.blink -= dt; if (BA.blink < -0.13) BA.blink = 1.8 + Math.random() * 3.2;
+    var eyeY = BA.blink < 0 ? 0.12 : 1;
+    // cheer after a find: a little crouch, a jump with both arms up, and a landing
+    var ch = 0, jump = 0, squat = 0, tuck = 0;
+    if (BA.cheer >= 0) {
+      var k = BA.cheer += dt;
+      if (k > 1.25) BA.cheer = -1;
+      else {
+        ch = k < 0.08 ? k / 0.08 : k > 1.05 ? (1.25 - k) / 0.2 : 1;
+        var jk = (k - 0.14) / 0.46; if (jk > 0 && jk < 1) { jump = Math.sin(jk * Math.PI) * 1.15; tuck = Math.sin(jk * Math.PI); }
+        if (k < 0.14) squat = Math.sin(k / 0.14 * Math.PI / 2); else if (k > 0.6 && k < 0.9) squat = Math.sin((k - 0.6) / 0.3 * Math.PI) * 0.8;
+        eyeY = 0.55;
+      }
+    }
+    // shrug and head shake when Bhulu barks
+    var sh = 0, shake = 0;
+    if (BA.shrug >= 0) {
+      var q = BA.shrug += dt;
+      if (q > 0.9) BA.shrug = -1;
+      else { sh = q < 0.12 ? q / 0.12 : q > 0.7 ? (0.9 - q) / 0.2 : 1; shake = Math.sin(q * 26) * 0.28 * (1 - q / 0.9); }
+    }
+    b.hips.position.y = 1.55 + bob - 0.2 * squat + jump;
+    b.hips.position.x = Math.sin(t * 0.9) * 0.025 * idle;
+    b.hips.rotation.y = -twist * 0.5;
+    b.hips.rotation.z = Math.sin(t * 0.9) * 0.03 * idle;
+    b.torso.rotation.x = mix(lean, -0.12, ch) + 0.1 * squat;
+    b.torso.rotation.y = twist;
+    b.torso.scale.set(1 + breathe * 0.01, 1 + breathe * 0.014, 1 + breathe * 0.01);
+    var legT = -0.55 * squat - 0.7 * tuck, legK = 1.0 * squat + 1.3 * tuck;
+    b.L.hip.rotation.x = mix(thL, legT, ch); b.R.hip.rotation.x = mix(thR, legT * 0.85, ch);
+    b.L.knee.rotation.x = mix(kL, legK, ch); b.R.knee.rotation.x = mix(kR, legK * 0.9, ch);
+    [b.L, b.R].forEach(function (lg) { lg.ankle.rotation.x = -(lg.hip.rotation.x + lg.knee.rotation.x) * 0.6 * (1 - tuck * 0.5); });
+    [[b.AL, shL], [b.AR, shR]].forEach(function (a) {
+      var arm = a[0], sx = arm.sx;
+      arm.sh.rotation.x = mix(mix(a[1], -0.5, sh), -2.85, ch);
+      arm.sh.rotation.z = sx * mix(mix(out, 0.45, sh), 0.4, ch);
+      arm.el.rotation.x = mix(mix(elb, -1.2, sh), -0.15, ch);
+      arm.el.rotation.z = sx * 0.6 * sh * (1 - ch);
+    });
+    b.head.rotation.x = -lean * 0.6 - 0.22 * ch + 0.05 * sh;
+    b.head.rotation.y = BA.look + shake;
+    b.head.rotation.z = 0.12 * sh + Math.sin(t * 0.7) * 0.03 * idle;
+    b.eyes.forEach(function (e) { e.scale.y = eyeY; });
+    b.brows.forEach(function (w) { w.position.y = 0.17 + 0.045 * Math.max(ch, sh); });
+    b.smile.visible = ch < 0.3; b.mouthO.visible = ch >= 0.3;
+    // lean into turns while running
+    var df = P.face - BA.prevFace; while (df > Math.PI) df -= 2 * Math.PI; while (df < -Math.PI) df += 2 * Math.PI;
+    BA.prevFace = P.face;
+    var rollGoal = dt > 0 ? clamp(-df / dt * 0.05 * mv, -0.16, 0.16) : 0;
+    BA.roll += (rollGoal - BA.roll) * Math.min(1, dt * 6);
+    b.g.position.set(X(P.x), Y(P.y), Z(P.z)); b.g.rotation.set(0, P.face, BA.roll);
+  }
+
+  /* ---------- Bhulu's moves ---------- */
+  function dogFollow(dt) {
+    var lt = trail[trail.length - 1];
+    if (!lt || (P.x - lt.x) * (P.x - lt.x) + (P.z - lt.z) * (P.z - lt.z) > 36) trail.push({ x: P.x, z: P.z });
+    var sx = P.x - DG.x, sz = P.z - DG.z;
+    if (sx * sx + sz * sz < 44 * 44 && clearLine(DG.x, DG.z, P.x, P.z)) trail.length = 0;   // close, with nothing in between
+    if (trail.length > 700) { var jump = trail[trail.length - 60]; DG.x = jump.x; DG.z = jump.z; trail.splice(0, trail.length - 60); }
+    var len = 0, ax = DG.x, az = DG.z;
+    for (var i = 0; i < trail.length; i++) { var q = trail[i]; len += Math.sqrt((q.x - ax) * (q.x - ax) + (q.z - az) * (q.z - az)); ax = q.x; az = q.z; }
+    len += Math.sqrt((P.x - ax) * (P.x - ax) + (P.z - az) * (P.z - az));
+    var want = len - 36, goal = want > 0 ? Math.min(170, 30 + want * 2.4) : 0;
+    DG.spd += (goal - DG.spd) * Math.min(1, dt * (goal > DG.spd ? 5 : 8));
+    var step = DG.spd * dt, hx = 0, hz = 0;
+    for (var guard = 0; step > 0.0001 && guard < 50; guard++) {
+      var tq = trail.length ? trail[0] : null, tx = tq ? tq.x : P.x, tz = tq ? tq.z : P.z;
+      var dx = tx - DG.x, dz = tz - DG.z, d = Math.sqrt(dx * dx + dz * dz);
+      if (!tq) { var room = d - 36; if (room <= 0) break; if (step > room) step = room; }
+      if (d < 1e-4) { if (tq) { trail.shift(); continue; } break; }
+      hx = dx; hz = dz;
+      if (tq && d <= step) { DG.x = tx; DG.z = tz; step -= d; trail.shift(); }
+      else { var mvd = Math.min(step, d); DG.x += dx / d * mvd; DG.z += dz / d * mvd; step = 0; }
+    }
+    if (DG.spd > 8 && (hx || hz)) turnTo(DG, Math.atan2(hx, hz), dt * 8);
+    DG.y += (floorAt(DG.x, DG.z) - DG.y) * Math.min(1, dt * 10);
+  }
+  function dogStep(dt, now) {
+    if (game.state === "play" || game.state === "ending") dogFollow(dt);
+    else DG.spd *= Math.max(0, 1 - dt * 8);
+    if (DG.bark >= 0) {
+      DG.bark += dt;
+      if (DG.barkAt) turnTo(DG, Math.atan2(DG.barkAt.x - DG.x, DG.barkAt.z - DG.z), dt * 10);
+      if (DG.bark > 0.8) DG.bark = -1;
+    }
+    if (DG.happy >= 0) { DG.happy += dt; if (DG.happy > 1.2) DG.happy = -1; }
+    animDog(dt, now);
+  }
+  function animDog(dt, now) {
+    var t = now / 1000, d = dog, sp = DG.spd / 12;
+    var mv = clamp(sp / 1.5, 0, 1);
+    DG.ph += dt * (3 + sp * 1.9);
+    var s = Math.sin(DG.ph), c = Math.cos(DG.ph);
+    // sit down after standing still for a moment
+    DG.still = (mv > 0.08 || DG.bark >= 0 || DG.happy >= 0) ? 0 : DG.still + dt;
+    var sitGoal = DG.still > 0.7 ? 1 : 0;
+    DG.sit += (sitGoal - DG.sit) * Math.min(1, dt * (sitGoal ? 3.5 : 9));
+    var st = DG.sit, th = 0.55 * st, A = 0.6 * mv;
+    var bp = 0;   // two barks: the jaw snaps open twice
+    if (DG.bark >= 0) { var k = DG.bark; bp = Math.max(0, 1 - Math.abs(k - 0.08) / 0.1) + Math.max(0, 1 - Math.abs(k - 0.38) / 0.1); }
+    var hop = DG.happy >= 0 ? Math.abs(Math.sin(DG.happy / 1.2 * Math.PI * 3)) * 0.45 * (1 - DG.happy / 1.2) : 0;
+    d.root.position.y = -0.55 * st + Math.abs(c) * 0.07 * mv + hop;
+    d.spine.rotation.x = -th - bp * 0.12 - (hop > 0.02 ? 0.15 : 0);
+    // trot: front-left moves with back-right, front-right with back-left
+    d.FL.up.rotation.x = A * s + th; d.FR.up.rotation.x = -A * s + th;
+    d.FL.lo.rotation.x = 0.9 * mv * Math.max(0, -c); d.FR.lo.rotation.x = 0.9 * mv * Math.max(0, c);
+    d.BR.up.rotation.x = A * s - 0.45 * st; d.BL.up.rotation.x = -A * s - 0.45 * st;
+    d.BR.lo.rotation.x = 0.6 * mv * Math.max(0, -c) + 1.8 * st; d.BL.lo.rotation.x = 0.6 * mv * Math.max(0, c) + 1.8 * st;
+    // head: watch Khalid while sitting, look up to bark
+    var lookGoal = 0;
+    if (st > 0.5 && DG.bark < 0) {
+      var ang = Math.atan2(P.x - DG.x, P.z - DG.z) - DG.face;
+      while (ang > Math.PI) ang -= 2 * Math.PI; while (ang < -Math.PI) ang += 2 * Math.PI;
+      lookGoal = clamp(ang, -0.9, 0.9);
+    }
+    DG.look += (lookGoal - DG.look) * Math.min(1, dt * 4);
+    d.neck.rotation.y = DG.look;
+    d.head.rotation.x = 0.45 * st + 0.08 * mv - bp * 0.35 + Math.sin(t * 1.7) * 0.03;
+    d.head.rotation.z = st * Math.sin(t * 0.6) * 0.12;
+    var pant = st > 0.4 && DG.bark < 0;
+    d.jaw.rotation.x = bp * 0.6 + (pant ? 0.16 + Math.sin(t * 13) * 0.05 : 0);
+    d.tongue.visible = pant;
+    d.ears.forEach(function (e) { e.rotation.x = -0.25 * bp + Math.sin(DG.ph) * 0.05 * mv; });
+    var wagSpd = DG.happy >= 0 ? 24 : bp > 0 ? 18 : 10 + 4 * mv, wagAmp = DG.happy >= 0 ? 0.6 : 0.35;
+    d.tail.rotation.y = Math.sin(t * wagSpd) * wagAmp;
+    d.g.position.set(X(DG.x), Y(DG.y), Z(DG.z)); d.g.rotation.y = DG.face;
+  }
+
+  /* ---------- main loop ---------- */
+  var last = performance.now(), wasInside = null, tmpV = new THREE.Vector3(), perf = { n: 0, acc: 0 };
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function setInside(inside) {
+    if (inside === wasInside) return;
+    wasInside = inside;
+    clipArr.length = 0; if (inside) clipArr.push(cutPlane);
+    groups.roof.visible = !inside;
+  }
+  function updateItems(dt, now) {
+    ITEMS.forEach(function (it) {
+      if (!it.obj.visible) return;
+      if (it.gone) {
+        it.anim += dt;
+        var k = Math.min(1, it.anim / 0.6);
+        it.obj.position.y = Y(it.baseY) + k * 2.2; it.obj.scale.setScalar(it.s * (1 - k * 0.9));
+        if (k >= 1) it.obj.visible = false;
+        return;
+      }
+      it.obj.position.y = Y(it.baseY) + (reduce ? 0 : Math.sin(now * 0.003 + it.phase) * 0.06 + 0.04);
+      var ud = it.obj.userData;
+      if (ud.spin && !reduce) ud.spin.rotation.y += dt * ud.spinRate;
+      if (ud.wiggle && !reduce) ud.wiggle.rotation.y = Math.sin(now * 0.0025 + it.phase) * 0.7;
+      if (it.ring.visible) { var s = 1 + Math.sin(now * 0.006) * 0.15; it.ring.scale.set(s, s, s); }
+    });
+  }
+  function playStep(dt) {
+    game.t += dt; game.total += dt;
+    var f = 0, r = 0;
+    if (keys.KeyW || keys.ArrowUp) f += 1; if (keys.KeyS || keys.ArrowDown) f -= 1;
+    if (keys.KeyD || keys.ArrowRight) r += 1; if (keys.KeyA || keys.ArrowLeft) r -= 1;
+    if (keys.KeyQ) cam.yaw += 1.9 * dt; if (keys.KeyE) cam.yaw -= 1.9 * dt;
+    f -= joy.y; r += joy.x;
+    var mag = Math.sqrt(f * f + r * r); if (mag > 1) { f /= mag; r /= mag; mag = 1; }
+    var mx = (-Math.sin(cam.yaw)) * f + Math.cos(cam.yaw) * r, mz = (-Math.cos(cam.yaw)) * f + (-Math.sin(cam.yaw)) * r;
+    var speed = (keys.ShiftLeft || keys.ShiftRight ? 42 : 90) * mag, ox = P.x, oz = P.z;
+    P.x += mx * speed * dt; P.z += mz * speed * dt;
+    collide(P);
+    var moved = Math.sqrt((P.x - ox) * (P.x - ox) + (P.z - oz) * (P.z - oz)) / 12 / Math.max(dt, 1e-3);
+    BA.spd += (moved - BA.spd) * Math.min(1, dt * 10);
+    P.y += (floorAt(P.x, P.z) - P.y) * Math.min(1, dt * 12);
+    if (mag > 0.05) { P.faceGoal = null; turnTo(P, Math.atan2(mx, mz), dt * 12); }
+    else if (P.faceGoal !== null) turnTo(P, P.faceGoal, dt * 8);
+
+    var target = game.list[game.idx];
+    if (target && !game.hint && !game.sparkle && game.t > 40) { game.sparkle = true; target.ring.visible = true; toast(u("sparkle")); }
+    if (arrow.visible && target) {
+      arrow.position.set(X(P.x), Y(P.y) + 4.8, Z(P.z));
+      arrow.rotation.y = Math.atan2(X(target.at[0]) - X(P.x), Z(target.at[1]) - Z(P.z));
+    }
+    // walking up to a thing: pick it up if it is the one, otherwise Bhulu barks (once per visit)
+    ITEMS.forEach(function (it) {
+      if (it.gone || game.state !== "play") return;
+      var dx = it.at[0] - P.x, dz = it.at[1] - P.z, near = dx * dx + dz * dz <= 28 * 28 && Math.abs(it.baseY - P.y) <= 40;
+      if (near && !it.near) { if (it === game.list[game.idx]) found(it); else wrongPick(it); }
+      it.near = near;
+    });
+    var sec = Math.floor(game.total);
+    if (sec !== game.lastSec) { game.lastSec = sec; $("h-time").textContent = fmtTime(game.total); }
+  }
+  function followCam(dt) {
+    var inside = P.x >= -2 && P.x <= 457 && P.z >= -2 && P.z <= 474;
+    setInside(inside);
+    var near = touch ? 0.82 : 1, tDist = (inside ? 12 : 17) * near, tH = (inside ? 16 : 9) * near;   // a bit closer on small phone screens
+    cam.dist += (tDist - cam.dist) * Math.min(1, dt * 3); cam.h += (tH - cam.h) * Math.min(1, dt * 3);
+    tmpV.set(X(P.x) + Math.sin(cam.yaw) * cam.dist, Y(P.y) + cam.h, Z(P.z) + Math.cos(cam.yaw) * cam.dist);
+    camera.position.lerp(tmpV, Math.min(1, dt * 6));
+    cam.look.lerp(tmpV.set(X(P.x), Y(P.y) + 2.2, Z(P.z)), Math.min(1, dt * 8));
+    camera.lookAt(cam.look);
+  }
+  function update(now) {
+    var raw = (now - last) / 1000, dt = clamp(raw, 0, 0.05); last = now;
+    // slow phone? draw fewer pixels
+    if (raw > 0 && raw < 0.5 && !document.hidden) {
+      perf.acc += raw; perf.n++;
+      if (perf.acc > 3) {
+        var fps = perf.n / perf.acc; perf.acc = 0; perf.n = 0;
+        if (fps < 30 && curPR > 0.75) { curPR = Math.max(0.75, curPR - 0.25); renderer.setPixelRatio(curPR); resize(); }
+      }
+    }
+    skyDome.position.copy(camera.position);
+    if (!reduce) fans.forEach(function (f) { f.rotation.y += dt * 5; });
+    updateItems(dt, now); updateFx(dt);
+    if (game.state === "play") playStep(dt);
+    else if (game.state !== "pause") BA.spd *= Math.max(0, 1 - dt * 8);
+    if (game.state !== "pause") { animBoy(dt, now); dogStep(dt, now); updateBubble(dt); }
+    if (game.state === "menu") {
+      setInside(false);
+      cam.orbit += dt * (reduce ? 0 : 0.08);
+      camera.position.set(Math.sin(cam.orbit) * 58 - 6, 24, Math.cos(cam.orbit) * 58 + 8);
+      cam.look.set(0, 2, 2); camera.lookAt(cam.look);
+    } else if (game.state !== "pause") followCam(dt);
+  }
+  function loop(now) {
+    requestAnimationFrame(loop);
+    update(now);
+    renderer.render(scene, camera);
+  }
+
+  placeDog();
+  var savedLang = "en";
+  try { savedLang = localStorage.getItem("rafi-hunt-lang") || "en"; } catch (e) {}
+  setLang(savedLang === "bn" ? "bn" : "en");
+  requestAnimationFrame(loop);
+})();
+</script>

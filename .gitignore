@@ -1,0 +1,16 @@
+# --- NEVER commit the app signing key ---
+*.keystore
+*.jks
+keystore-password.txt
+
+# Android build output (rebuild with source/android/build_apk.py)
+source/android/build/
+*.idsig
+*.apks
+
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
